@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#D70000</color>      <!-- لون الشريط العلوي والأزرار الأساسية -->
+    <color name="primary_dark">#830000</color> <!-- درجة أغمق من الأساسي -->
+    <color name="accent">#490000</color>       <!-- لون التمييز (أزرار ثانوية، تأكيدات) -->
+    <color name="background">#F5F7F6</color>   <!-- خلفية الشاشات -->
+    <color name="white">#FFFFFF</color>
+</resources>
