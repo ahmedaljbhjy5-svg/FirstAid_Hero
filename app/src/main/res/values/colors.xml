@@ -5,4 +5,10 @@
     <color name="accent">#490000</color>       <!-- لون التمييز (أزرار ثانوية، تأكيدات) -->
     <color name="background">#F5F7F6</color>   <!-- خلفية الشاشات -->
     <color name="white">#FFFFFF</color>
+    <color name="app_bar">#D70000</color>
+    <color name="sos_red">#D32F2F</color>
+    <color name="urgency_mild">#00796B</color>
+    <color name="urgency_serious">#E65100</color>
+    <color name="urgency_critical">#D32F2F</color>
+    <color name="severity_empty">#D9D9D9</color>
 </resources>

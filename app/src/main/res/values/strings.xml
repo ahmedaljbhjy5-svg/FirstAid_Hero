@@ -11,4 +11,7 @@
     <string name="nav_contacts">Contacts</string>
     <string name="nav_treated">Treated cases</string>
     <string name="nav_stats">Statistics</string>
+    <string name="severity_low">Severity: low</string>
+    <string name="severity_medium">Severity: medium</string>
+    <string name="severity_high">Severity: high</string>
 </resources>

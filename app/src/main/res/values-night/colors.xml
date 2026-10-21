@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_bar">#7F1D1D</color>
+    <color name="urgency_mild">#4DB6AC</color>
+    <color name="urgency_serious">#FFA726</color>
+    <color name="urgency_critical">#FF5252</color>
+    <color name="severity_empty">#4A4A4A</color>
+</resources>

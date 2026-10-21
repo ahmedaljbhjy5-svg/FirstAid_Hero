@@ -7,41 +7,55 @@
     android:layout_margin="8dp"
     android:clickable="true"
     android:focusable="true"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/cardImage"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="@null"
+            app:shapeAppearanceOverlay="@style/ShapeRounded12" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/cardTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/cardDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <ImageView
-            android:id="@+id/cardImage"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:scaleType="centerCrop"
-            android:contentDescription="@null" />
+            android:id="@+id/cardSeverity"
+            android:layout_width="32dp"
+            android:layout_height="32dp" />
 
-        <TextView
-            android:id="@+id/cardTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:paddingBottom="2dp"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-        <TextView
-            android:id="@+id/cardSubtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="12dp"
-            android:textSize="13sp"
-            android:maxLines="2"
-            android:ellipsize="end" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -12,4 +12,7 @@
     <string name="nav_contacts">جهات الاتصال</string>
     <string name="nav_treated">الحالات المعالجة</string>
     <string name="nav_stats">الإحصائيات</string>
+    <string name="severity_low">درجة الخطورة: منخفضة</string>
+    <string name="severity_medium">درجة الخطورة: متوسطة</string>
+    <string name="severity_high">درجة الخطورة: عالية</string>
 </resources>

@@ -28,7 +28,6 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         this.listener = listener;
     }
 
-    // 1) بيتنفذ فقط لما يحتاج RecyclerView كرت جديد (عدد قليل من المرات)
     @NonNull
     @Override
     public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -37,33 +36,35 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         return new CardViewHolder(view);
     }
 
-    // 2) بيتنفذ مع كل كرت بيظهر: بيعبي الكرت (القديم المُعاد تدويره) ببيانات جديدة
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
         CardItem item = items.get(position);
         holder.title.setText(item.getTitle());
-        holder.subtitle.setText(item.getSubtitle());
+        holder.description.setText(item.getDescription());
         holder.image.setImageResource(item.getImageRes());
+        holder.severity.setImageResource(item.getSeverity().iconRes);
+        holder.severity.setContentDescription(
+                holder.itemView.getContext().getString(item.getSeverity().labelRes));
         holder.itemView.setOnClickListener(v -> listener.onItemClick(item));
     }
 
-    // 3) كم عنصر عندي بالمجموع
     @Override
     public int getItemCount() {
         return items.size();
     }
 
-    // بيحفظ مراجع الـ Views مرة وحدة
     static class CardViewHolder extends RecyclerView.ViewHolder {
         final ImageView image;
+        final ImageView severity;
         final TextView title;
-        final TextView subtitle;
+        final TextView description;
 
         CardViewHolder(@NonNull View itemView) {
             super(itemView);
             image = itemView.findViewById(R.id.cardImage);
+            severity = itemView.findViewById(R.id.cardSeverity);
             title = itemView.findViewById(R.id.cardTitle);
-            subtitle = itemView.findViewById(R.id.cardSubtitle);
+            description = itemView.findViewById(R.id.cardDescription);
         }
     }
 }

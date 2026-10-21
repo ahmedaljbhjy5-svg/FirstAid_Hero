@@ -1,18 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="8dp">
 
-    <com.google.android.material.button.MaterialButton
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/headerButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:minWidth="260dp"
-        android:minHeight="72dp"
-        android:textSize="28sp"
-        android:text="@string/header_button" />
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@color/sos_red"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_call" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:text="@string/header_button"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:importantForAccessibility="no"
+                android:scaleX="-1"
+                android:src="@drawable/ic_call" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 </FrameLayout>

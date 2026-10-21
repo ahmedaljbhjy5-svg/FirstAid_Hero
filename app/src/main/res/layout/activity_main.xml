@@ -11,7 +11,7 @@
         android:id="@+id/appBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/primary"
+        android:background="@color/app_bar"
         android:fitsSystemWindows="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
