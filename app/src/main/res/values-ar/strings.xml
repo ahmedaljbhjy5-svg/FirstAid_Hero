@@ -8,4 +8,8 @@
     <string name="card_title">كرت %1$d</string>
     <string name="card_subtitle">وصف الكرت رقم %1$d</string>
     <string name="logo_desc">شعار التطبيق</string>
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_contacts">جهات الاتصال</string>
+    <string name="nav_treated">الحالات المعالجة</string>
+    <string name="nav_stats">الإحصائيات</string>
 </resources>

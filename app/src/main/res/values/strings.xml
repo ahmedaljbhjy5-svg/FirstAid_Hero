@@ -7,4 +7,8 @@
     <string name="card_title">Card %1$d</string>
     <string name="card_subtitle">Description for card number %1$d</string>
     <string name="logo_desc">App logo</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_contacts">Contacts</string>
+    <string name="nav_treated">Treated cases</string>
+    <string name="nav_stats">Statistics</string>
 </resources>
