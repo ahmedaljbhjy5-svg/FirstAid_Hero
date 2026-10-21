@@ -16,21 +16,20 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
-
-import android.widget.Toast;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import java.util.ArrayList;
-import java.util.List;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.ahmed.firstaidhero1.R;
-import com.ahmed.firstaidhero1.adapter.CardAdapter;
-import com.ahmed.firstaidhero1.adapter.HeaderAdapter;
-import com.ahmed.firstaidhero1.model.CardItem;
-
-import androidx.recyclerview.widget.ConcatAdapter;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG_HOME = "home";
+    private static final String TAG_CONTACTS = "contacts";
+    private static final String TAG_TREATED = "treated";
+    private static final String TAG_STATS = "stats";
+    private static final String[] TAGS = {TAG_HOME, TAG_CONTACTS, TAG_TREATED, TAG_STATS};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,17 +37,24 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightStatusBars(false);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
-            v.setPadding(systemBars.left, 0, systemBars.right,
-                    Math.max(systemBars.bottom, ime.bottom));
+            // الأعلى: مسؤولية AppBarLayout. الأسفل: الشريط السفلي بيتعامل مع شريط النظام لحاله،
+            // فهون نحسب بس الكيبورد
+            v.setPadding(systemBars.left, 0, systemBars.right, ime.bottom);
+            // الكيبورد مفتوح = نخفي الشريط السفلي حتى ما يطلع فوق الكيبورد
+            bottomNav.setVisibility(
+                    insets.isVisible(WindowInsetsCompat.Type.ime()) ? View.GONE : View.VISIBLE);
             return insets;
         });
 
+        // ---------- الشريط العلوي (نفس كودك السابق) ----------
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -57,10 +63,8 @@ public class MainActivity extends AppCompatActivity {
         ViewGroup toolbarContent = findViewById(R.id.toolbarContent);
         SearchView searchView = findViewById(R.id.searchView);
 
-
         View plate = searchView.findViewById(androidx.appcompat.R.id.search_plate);
         plate.setBackgroundColor(Color.TRANSPARENT);
-
 
         OnBackPressedCallback backCallback = new OnBackPressedCallback(false) {
             @Override
@@ -69,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         getOnBackPressedDispatcher().addCallback(this, backCallback);
-
 
         searchView.setOnQueryTextFocusChangeListener((v, hasFocus) -> {
             TransitionManager.beginDelayedTransition(toolbarContent);
@@ -89,40 +92,53 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // ---------- التنقل بين التبويبات ----------
+        setupFragments(savedInstanceState);
 
-
-
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
-
-        HeaderAdapter headerAdapter = new HeaderAdapter(v ->
-                Toast.makeText(this, "Button clicked", Toast.LENGTH_SHORT).show()); // حط هون منطق زرك القديم
-
-        CardAdapter cardAdapter = new CardAdapter(createDummyItems(), item ->
-                Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show());
-
-        ConcatAdapter concatAdapter = new ConcatAdapter(headerAdapter, cardAdapter);
-
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
-        layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
-            @Override
-            public int getSpanSize(int position) {
-                return position == 0 ? 2 : 1; // الزر ياخد العمودين، والكروت عمود لكل وحدة
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                showTab(TAG_HOME);
+            } else if (id == R.id.nav_contacts) {
+                showTab(TAG_CONTACTS);
+            } else if (id == R.id.nav_treated) {
+                showTab(TAG_TREATED);
+            } else if (id == R.id.nav_stats) {
+                showTab(TAG_STATS);
+            } else {
+                return false;
             }
+            return true;
         });
-
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setAdapter(concatAdapter);
     }
 
-    private List<CardItem> createDummyItems() {
-        List<CardItem> list = new ArrayList<>();
-        for (int i = 1; i <= 10; i++) {
-            list.add(new CardItem(
-                    getString(R.string.card_title, i),
-                    getString(R.string.card_subtitle, i),
-                    R.mipmap.ic_launcher));
+    private void setupFragments(Bundle savedInstanceState) {
+        // لو الشاشة انعادت (تدوير مثلاً)، الـ FragmentManager رجّع الـ Fragments لحاله
+        // ولو أضفناهم مرة تانية بيصيروا نسختين فوق بعض
+        if (savedInstanceState != null) return;
+
+        Fragment contacts = new ContactsFragment();
+        Fragment treated = new TreatedCasesFragment();
+        Fragment stats = new StatisticsFragment();
+
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .add(R.id.fragmentContainer, new HomeFragment(), TAG_HOME)
+                .add(R.id.fragmentContainer, contacts, TAG_CONTACTS).hide(contacts)
+                .add(R.id.fragmentContainer, treated, TAG_TREATED).hide(treated)
+                .add(R.id.fragmentContainer, stats, TAG_STATS).hide(stats)
+                .commit();
+    }
+
+    private void showTab(String selectedTag) {
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction().setReorderingAllowed(true);
+        for (String tag : TAGS) {
+            Fragment f = fm.findFragmentByTag(tag);
+            if (f == null) continue;
+            if (tag.equals(selectedTag)) ft.show(f);
+            else ft.hide(f);
         }
-        return list;
+        ft.commit();
     }
 }
