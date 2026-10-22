@@ -14,4 +14,10 @@
     <string name="severity_low">Severity: low</string>
     <string name="severity_medium">Severity: medium</string>
     <string name="severity_high">Severity: high</string>
+    <string name="detail_help_title">When to get help</string>
+    <string name="detail_steps_title">What to do</string>
+    <string name="detail_donts_title">What not to do</string>
+    <string name="back">Back</string>
+    <string name="no_dialer">No phone app found on this device</string>
+    <string name="emergency_number" translatable="false">112</string>
 </resources>

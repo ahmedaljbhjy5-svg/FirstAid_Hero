@@ -15,4 +15,9 @@
     <string name="severity_low">درجة الخطورة: منخفضة</string>
     <string name="severity_medium">درجة الخطورة: متوسطة</string>
     <string name="severity_high">درجة الخطورة: عالية</string>
+    <string name="detail_help_title">متى تطلب المساعدة؟</string>
+    <string name="detail_steps_title">ماذا تفعل؟</string>
+    <string name="detail_donts_title">ما يجب تجنّبه</string>
+    <string name="back">رجوع</string>
+    <string name="no_dialer">لا يوجد تطبيق اتصال على هذا الجهاز</string>
 </resources>

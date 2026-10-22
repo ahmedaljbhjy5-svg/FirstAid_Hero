@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sample content. Will move to SQLite later. -->
+
+    <string name="case_bleeding_title">Severe bleeding</string>
+    <string name="case_bleeding_desc">Press firmly and directly on the wound to stop the bleeding.</string>
+    <string name="case_bleeding_help">Call emergency services immediately for heavy bleeding. Do not wait.</string>
+    <string-array name="case_bleeding_steps">
+        <item>Wear gloves if available, and have the person sit or lie down.</item>
+        <item>Press firmly on the wound with a clean cloth or gauze.</item>
+        <item>Keep pressing without lifting your hand to check. If the cloth soaks through, add another on top.</item>
+        <item>Raise the injured limb if possible and secure a firm bandage over the cloth.</item>
+        <item>Stay with the person until help arrives and watch their breathing and alertness.</item>
+    </string-array>
+    <string-array name="case_bleeding_donts">
+        <item>Do not remove a soaked cloth. Add a new one on top.</item>
+        <item>Do not pull out an object stuck in the wound.</item>
+        <item>Do not use a tourniquet unless direct pressure fails to stop life-threatening bleeding from a limb.</item>
+    </string-array>
+
+    <string name="case_burns_title">Burns</string>
+    <string name="case_burns_desc">Cool the burn under cool running water for 10 to 20 minutes.</string>
+    <string name="case_burns_help">Call emergency services if the burn is large or deep, on the face, hands, genitals or over a joint, affects a child or an older person, or was caused by chemicals or electricity.</string>
+    <string-array name="case_burns_steps">
+        <item>Move the person away from the heat source and put out any flames.</item>
+        <item>Cool the burn with cool or lukewarm running water (not icy) for 10 to 20 minutes.</item>
+        <item>Remove rings, watches and tight items near the burn before swelling starts, unless stuck to the skin.</item>
+        <item>Cover the burn loosely with clean gauze or plastic cling film.</item>
+        <item>Get medical advice if you are unsure how serious the burn is.</item>
+    </string-array>
+    <string-array name="case_burns_donts">
+        <item>Do not apply ice or icy water.</item>
+        <item>Do not pop blisters.</item>
+        <item>Do not apply toothpaste, butter, oil or creams.</item>
+        <item>Do not remove clothing stuck to the skin.</item>
+    </string-array>
+
+    <string name="case_cut_title">Minor cut</string>
+    <string name="case_cut_desc">Wash the wound with clean running water and cover it with a clean dressing.</string>
+    <string name="case_cut_help">See a doctor if the cut is deep, very dirty, keeps bleeding, or if the person has not had a tetanus vaccine for many years.</string>
+    <string-array name="case_cut_steps">
+        <item>Wash your hands with soap and water before touching the wound.</item>
+        <item>Press on the cut with a clean cloth until the bleeding stops.</item>
+        <item>Rinse the wound under clean running water to remove dirt.</item>
+        <item>Gently dry around it and cover with a clean dressing or gauze.</item>
+        <item>Change the dressing daily and watch for redness, swelling or pus.</item>
+    </string-array>
+    <string-array name="case_cut_donts">
+        <item>Do not pour alcohol or hydrogen peroxide into the wound.</item>
+        <item>Do not touch the wound with unwashed hands.</item>
+    </string-array>
+</resources>
