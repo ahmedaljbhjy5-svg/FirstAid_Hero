@@ -16,7 +16,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.ahmed.firstaidhero1.R;
-import com.ahmed.firstaidhero1.data.CaseRepository;
+import com.ahmed.firstaidhero1.data.EmergencyRepository;
 import com.ahmed.firstaidhero1.model.CaseDetail;
 import com.ahmed.firstaidhero1.util.DialHelper;
 
@@ -39,31 +39,24 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             return insets;
         });
 
-        // 1) نقرأ الـ id اللي أرسلته الرئيسية ونجيب الحالة
-        int caseId = getIntent().getIntExtra(EXTRA_CASE_ID, -1);
-        CaseDetail detail = new CaseRepository(this).getDetail(caseId);
+        long caseId = getIntent().getLongExtra(EXTRA_CASE_ID, -1L);
+        CaseDetail detail = new EmergencyRepository(this).getDetail(caseId);
         if (detail == null) {
-            finish(); // id غير صالح: سكّر الشاشة بدل ما تكرش
+            finish(); // رقم غير صالح: نسكّر الشاشة بدل ما ننهار
             return;
         }
 
-        // 2) الشريط العلوي
         Toolbar toolbar = findViewById(R.id.detailToolbar);
         toolbar.setTitle(detail.getTitle());
         toolbar.setNavigationOnClickListener(v -> finish());
 
-        // 3) الأجزاء الثابتة
         ImageView severityIcon = findViewById(R.id.detailSeverity);
         severityIcon.setImageResource(detail.getSeverity().iconRes);
-        severityIcon.setContentDescription(getString(detail.getSeverity().labelRes));
-
-        ((TextView) findViewById(R.id.detailDescription)).setText(detail.getDescription());
-        ((TextView) findViewById(R.id.detailHelpText)).setText(detail.getHelpWhen());
-
-        // 4) القوائم: صف لكل خطوة وصف لكل تحذير
-        LayoutInflater inflater = LayoutInflater.from(this);
+        ((TextView) findViewById(R.id.detailSeverityLabel)).setText(detail.getSeverity().labelRes);
+        ((TextView) findViewById(R.id.detailSymptoms)).setText(detail.getSymptoms());
 
         LinearLayout stepsContainer = findViewById(R.id.stepsContainer);
+        LayoutInflater inflater = LayoutInflater.from(this);
         for (int i = 0; i < detail.getSteps().size(); i++) {
             View row = inflater.inflate(R.layout.item_step, stepsContainer, false);
             ((TextView) row.findViewById(R.id.stepNumber)).setText(String.valueOf(i + 1));
@@ -71,14 +64,6 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             stepsContainer.addView(row);
         }
 
-        LinearLayout dontsContainer = findViewById(R.id.dontsContainer);
-        for (String text : detail.getDonts()) {
-            View row = inflater.inflate(R.layout.item_dont, dontsContainer, false);
-            ((TextView) row.findViewById(R.id.dontText)).setText(text);
-            dontsContainer.addView(row);
-        }
-
-        // 5) زر الاتصال السفلي
         findViewById(R.id.headerButton).setOnClickListener(v -> DialHelper.dialEmergency(this));
     }
 }

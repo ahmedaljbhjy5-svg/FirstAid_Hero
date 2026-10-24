@@ -20,7 +20,7 @@
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/bg_circle_primary"
+
             android:contentDescription="@null"
             android:padding="12dp"
             android:src="@drawable/ic_call" />

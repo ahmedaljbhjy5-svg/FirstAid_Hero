@@ -3,7 +3,6 @@
     <string name="Snake_Bite">Snake bite</string>
    <!-- <string name="sos">SOS</string>-->
     <string name="header_button">SOS</string>
-    <string name="search_hint">Search .....</string>
     <string name="card_title">Card %1$d</string>
     <string name="card_subtitle">Description for card number %1$d</string>
     <string name="logo_desc">App logo</string>
@@ -32,4 +31,7 @@
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
+    <string name="search_hint">Search: burns, choking, snake...</string>
+    <string name="search_no_results">No matching case. Try another word.</string>
+    <string name="detail_symptoms_title">Symptoms</string>
 </resources>

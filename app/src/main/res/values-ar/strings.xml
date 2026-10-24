@@ -4,7 +4,6 @@
     <string name="Snake_Bite">لدغة افعى</string>
     <!--<string name="sos">اتصل بالطوارئ</string>-->
     <string name="header_button">اتصل بالطوارئ</string>
-    <string name="search_hint">ابحث .....</string>
     <string name="card_title">كرت %1$d</string>
     <string name="card_subtitle">وصف الكرت رقم %1$d</string>
     <string name="logo_desc">شعار التطبيق</string>
@@ -32,4 +31,7 @@
     <string name="save">حفظ</string>
     <string name="cancel">إلغاء</string>
     <string name="delete">حذف</string>
+    <string name="search_hint">ابحث: حروق، اختناق، لدغ...</string>
+    <string name="search_no_results">لا توجد حالة مطابقة. جرّب كلمة أخرى.</string>
+    <string name="detail_symptoms_title">الأعراض</string>
 </resources>

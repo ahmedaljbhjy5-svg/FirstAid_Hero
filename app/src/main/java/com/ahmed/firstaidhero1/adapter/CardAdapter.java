@@ -7,24 +7,38 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.ahmed.firstaidhero1.R;
 import com.ahmed.firstaidhero1.model.CardItem;
 
-import java.util.List;
-
-public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder> {
+public class CardAdapter extends ListAdapter<CardItem, CardAdapter.CardViewHolder> {
 
     public interface OnItemClickListener {
         void onItemClick(CardItem item);
     }
 
-    private final List<CardItem> items;
+    // بتحدد شو تغيّر بين قائمتين، فالتحديث بيحرّك بس الصفوف المتأثرة
+    private static final DiffUtil.ItemCallback<CardItem> DIFF = new DiffUtil.ItemCallback<CardItem>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull CardItem a, @NonNull CardItem b) {
+            return a.getId() == b.getId();
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull CardItem a, @NonNull CardItem b) {
+            return a.getTitle().equals(b.getTitle())
+                    && a.getDescription().equals(b.getDescription())
+                    && a.getSeverity() == b.getSeverity();
+        }
+    };
+
     private final OnItemClickListener listener;
 
-    public CardAdapter(List<CardItem> items, OnItemClickListener listener) {
-        this.items = items;
+    public CardAdapter(OnItemClickListener listener) {
+        super(DIFF);
         this.listener = listener;
     }
 
@@ -38,7 +52,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
-        CardItem item = items.get(position);
+        CardItem item = getItem(position);
         holder.title.setText(item.getTitle());
         holder.description.setText(item.getDescription());
         holder.image.setImageResource(item.getImageRes());
@@ -46,11 +60,6 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         holder.severity.setContentDescription(
                 holder.itemView.getContext().getString(item.getSeverity().labelRes));
         holder.itemView.setOnClickListener(v -> listener.onItemClick(item));
-    }
-
-    @Override
-    public int getItemCount() {
-        return items.size();
     }
 
     static class CardViewHolder extends RecyclerView.ViewHolder {

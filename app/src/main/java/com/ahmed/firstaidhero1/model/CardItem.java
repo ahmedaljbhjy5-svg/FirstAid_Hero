@@ -1,13 +1,13 @@
 package com.ahmed.firstaidhero1.model;
 
 public class CardItem {
-    private final int id;
+    private final long id;
     private final String title;
     private final String description;
     private final Severity severity;
     private final int imageRes;
 
-    public CardItem(int id, String title, String description, Severity severity, int imageRes) {
+    public CardItem(long id, String title, String description, Severity severity, int imageRes) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -15,7 +15,7 @@ public class CardItem {
         this.imageRes = imageRes;
     }
 
-    public int getId() { return id; }
+    public long getId() { return id; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public Severity getSeverity() { return severity; }

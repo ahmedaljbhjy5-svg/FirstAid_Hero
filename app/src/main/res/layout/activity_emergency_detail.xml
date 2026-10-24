@@ -55,7 +55,7 @@
                     android:layout_marginEnd="12dp" />
 
                 <TextView
-                    android:id="@+id/detailDescription"
+                    android:id="@+id/detailSeverityLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -81,18 +81,18 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/detail_help_title"
+                        android:text="@string/detail_symptoms_title"
                         android:textColor="?attr/colorOnSecondaryContainer"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/detailHelpText"
+                        android:id="@+id/detailSymptoms"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="?attr/colorOnSecondaryContainer"
-                        android:textSize="16sp" />
+                        android:textSize="18sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -107,22 +107,6 @@
 
             <LinearLayout
                 android:id="@+id/stepsContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="vertical" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/detail_donts_title"
-                android:textColor="@color/urgency_critical"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:id="@+id/dontsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
