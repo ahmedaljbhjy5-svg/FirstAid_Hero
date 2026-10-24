@@ -20,4 +20,16 @@
     <string name="back">Back</string>
     <string name="no_dialer">No phone app found on this device</string>
     <string name="emergency_number" translatable="false">112</string>
+    <string name="ambulance_label">Ambulance</string>
+    <string name="contact_add_title">Add contact</string>
+    <string name="contact_name_hint">Name (doctor, hospital...)</string>
+    <string name="contact_phone_hint">Phone number</string>
+    <string name="contact_name_required">Enter a name</string>
+    <string name="contact_phone_invalid">Enter a valid phone number</string>
+    <string name="contacts_empty_hint">Tap + to add the number of your doctor or nearest hospital</string>
+    <string name="contact_delete_title">Delete contact?</string>
+    <string name="contact_delete_message">%1$s will be removed from your list.</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
 </resources>

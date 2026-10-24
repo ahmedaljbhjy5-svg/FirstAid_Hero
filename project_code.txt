@@ -58,7 +58,6 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         this.listener = listener;
     }
 
-    // 1) بيتنفذ فقط لما يحتاج RecyclerView كرت جديد (عدد قليل من المرات)
     @NonNull
     @Override
     public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -67,33 +66,35 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         return new CardViewHolder(view);
     }
 
-    // 2) بيتنفذ مع كل كرت بيظهر: بيعبي الكرت (القديم المُعاد تدويره) ببيانات جديدة
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
         CardItem item = items.get(position);
         holder.title.setText(item.getTitle());
-        holder.subtitle.setText(item.getSubtitle());
+        holder.description.setText(item.getDescription());
         holder.image.setImageResource(item.getImageRes());
+        holder.severity.setImageResource(item.getSeverity().iconRes);
+        holder.severity.setContentDescription(
+                holder.itemView.getContext().getString(item.getSeverity().labelRes));
         holder.itemView.setOnClickListener(v -> listener.onItemClick(item));
     }
 
-    // 3) كم عنصر عندي بالمجموع
     @Override
     public int getItemCount() {
         return items.size();
     }
 
-    // بيحفظ مراجع الـ Views مرة وحدة
     static class CardViewHolder extends RecyclerView.ViewHolder {
         final ImageView image;
+        final ImageView severity;
         final TextView title;
-        final TextView subtitle;
+        final TextView description;
 
         CardViewHolder(@NonNull View itemView) {
             super(itemView);
             image = itemView.findViewById(R.id.cardImage);
+            severity = itemView.findViewById(R.id.cardSeverity);
             title = itemView.findViewById(R.id.cardTitle);
-            subtitle = itemView.findViewById(R.id.cardSubtitle);
+            description = itemView.findViewById(R.id.cardDescription);
         }
     }
 }
@@ -143,38 +144,342 @@ public class HeaderAdapter extends RecyclerView.Adapter<HeaderAdapter.HeaderView
     }
 }
 
+===== app\src\main\java\com\ahmed\firstaidhero1\data\CaseRepository.java =====
+package com.ahmed.firstaidhero1.data;
+
+import android.content.Context;
+import android.content.res.Resources;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.model.CardItem;
+import com.ahmed.firstaidhero1.model.CaseDetail;
+import com.ahmed.firstaidhero1.model.Severity;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class CaseRepository {
+
+    // تعريف حالة واحدة: أرقام الموارد فقط، النصوص الفعلية بتتجاب حسب لغة الجهاز
+    private static final class CaseDef {
+        final int id;
+        final int titleRes;
+        final int descRes;
+        final Severity severity;
+        final int helpRes;
+        final int stepsRes;
+        final int dontsRes;
+
+        CaseDef(int id, int titleRes, int descRes, Severity severity,
+                int helpRes, int stepsRes, int dontsRes) {
+            this.id = id;
+            this.titleRes = titleRes;
+            this.descRes = descRes;
+            this.severity = severity;
+            this.helpRes = helpRes;
+            this.stepsRes = stepsRes;
+            this.dontsRes = dontsRes;
+        }
+    }
+
+    private static final CaseDef[] CASES = {
+            new CaseDef(1, R.string.case_bleeding_title, R.string.case_bleeding_desc, Severity.HIGH,
+                    R.string.case_bleeding_help, R.array.case_bleeding_steps, R.array.case_bleeding_donts),
+            new CaseDef(2, R.string.case_burns_title, R.string.case_burns_desc, Severity.MEDIUM,
+                    R.string.case_burns_help, R.array.case_burns_steps, R.array.case_burns_donts),
+            new CaseDef(3, R.string.case_cut_title, R.string.case_cut_desc, Severity.LOW,
+                    R.string.case_cut_help, R.array.case_cut_steps, R.array.case_cut_donts)
+    };
+
+    private final Context context;
+
+    public CaseRepository(Context context) {
+        this.context = context;
+    }
+
+    // للقائمة: ملخصات فقط
+    public List<CardItem> getCardItems() {
+        List<CardItem> list = new ArrayList<>();
+        for (CaseDef def : CASES) {
+            list.add(new CardItem(
+                    def.id,
+                    context.getString(def.titleRes),
+                    context.getString(def.descRes),
+                    def.severity,
+                    R.mipmap.ic_launcher));
+        }
+        return list;
+    }
+
+    // للتفاصيل: حالة كاملة، أو null إذا الرقم غير موجود
+    public CaseDetail getDetail(int id) {
+        Resources res = context.getResources();
+        for (CaseDef def : CASES) {
+            if (def.id == id) {
+                return new CaseDetail(
+                        def.id,
+                        context.getString(def.titleRes),
+                        context.getString(def.descRes),
+                        def.severity,
+                        context.getString(def.helpRes),
+                        Arrays.asList(res.getStringArray(def.stepsRes)),
+                        Arrays.asList(res.getStringArray(def.dontsRes)));
+            }
+        }
+        return null;
+    }
+}
+
 ===== app\src\main\java\com\ahmed\firstaidhero1\model\CardItem.java =====
 package com.ahmed.firstaidhero1.model;
 
 public class CardItem {
+    private final int id;
     private final String title;
-    private final String subtitle;
+    private final String description;
+    private final Severity severity;
     private final int imageRes;
 
-    public CardItem(String title, String subtitle, int imageRes) {
+    public CardItem(int id, String title, String description, Severity severity, int imageRes) {
+        this.id = id;
         this.title = title;
-        this.subtitle = subtitle;
+        this.description = description;
+        this.severity = severity;
         this.imageRes = imageRes;
     }
 
+    public int getId() { return id; }
     public String getTitle() { return title; }
-    public String getSubtitle() { return subtitle; }
+    public String getDescription() { return description; }
+    public Severity getSeverity() { return severity; }
     public int getImageRes() { return imageRes; }
 }
 
-===== app\src\main\java\com\ahmed\firstaidhero1\ui\ContactsActivity.java =====
-package com.ahmed.firstaidhero1.ui;
+===== app\src\main\java\com\ahmed\firstaidhero1\model\CaseDetail.java =====
+package com.ahmed.firstaidhero1.model;
 
-public class ContactsActivity {
+import java.util.List;
+
+public class CaseDetail {
+    private final int id;
+    private final String title;
+    private final String description;
+    private final Severity severity;
+    private final String helpWhen;
+    private final List<String> steps;
+    private final List<String> donts;
+
+    public CaseDetail(int id, String title, String description, Severity severity,
+                      String helpWhen, List<String> steps, List<String> donts) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.severity = severity;
+        this.helpWhen = helpWhen;
+        this.steps = steps;
+        this.donts = donts;
+    }
+
+    public int getId() { return id; }
+    public String getTitle() { return title; }
+    public String getDescription() { return description; }
+    public Severity getSeverity() { return severity; }
+    public String getHelpWhen() { return helpWhen; }
+    public List<String> getSteps() { return steps; }
+    public List<String> getDonts() { return donts; }
 }
 
+===== app\src\main\java\com\ahmed\firstaidhero1\model\Severity.java =====
+package com.ahmed.firstaidhero1.model;
+
+import com.ahmed.firstaidhero1.R;
+
+public enum Severity {
+    LOW(1, R.drawable.ic_severity_low, R.string.severity_low),
+    MEDIUM(2, R.drawable.ic_severity_medium, R.string.severity_medium),
+    HIGH(3, R.drawable.ic_severity_high, R.string.severity_high);
+
+    public final int level;
+    public final int iconRes;
+    public final int labelRes;
+
+    Severity(int level, int iconRes, int labelRes) {
+        this.level = level;
+        this.iconRes = iconRes;
+        this.labelRes = labelRes;
+    }
+
+    // لقراءة القيمة من قاعدة البيانات لاحقاً (عمود INTEGER فيه 1 أو 2 أو 3)
+    public static Severity fromLevel(int level) {
+        for (Severity s : values()) {
+            if (s.level == level) return s;
+        }
+        return HIGH; // قيمة تالفة أو ناقصة = نفترض الأخطر، مش الأخف
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\ContactsFragment.java =====
+package com.ahmed.firstaidhero1.ui;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import com.ahmed.firstaidhero1.R;
+
+public class ContactsFragment extends Fragment {
+
+    public ContactsFragment() {
+        super(R.layout.fragment_placeholder);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((TextView) view.findViewById(R.id.placeholderText)).setText(R.string.nav_contacts);
+    }
+}
 
 ===== app\src\main\java\com\ahmed\firstaidhero1\ui\EmergencyDetailActivity.java =====
 package com.ahmed.firstaidhero1.ui;
 
-public class EmergencyDetailActivity {
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.data.CaseRepository;
+import com.ahmed.firstaidhero1.model.CaseDetail;
+import com.ahmed.firstaidhero1.util.DialHelper;
+
+public class EmergencyDetailActivity extends AppCompatActivity {
+
+    public static final String EXTRA_CASE_ID = "case_id";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_emergency_detail);
+
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.detailRoot), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        // 1) نقرأ الـ id اللي أرسلته الرئيسية ونجيب الحالة
+        int caseId = getIntent().getIntExtra(EXTRA_CASE_ID, -1);
+        CaseDetail detail = new CaseRepository(this).getDetail(caseId);
+        if (detail == null) {
+            finish(); // id غير صالح: سكّر الشاشة بدل ما تكرش
+            return;
+        }
+
+        // 2) الشريط العلوي
+        Toolbar toolbar = findViewById(R.id.detailToolbar);
+        toolbar.setTitle(detail.getTitle());
+        toolbar.setNavigationOnClickListener(v -> finish());
+
+        // 3) الأجزاء الثابتة
+        ImageView severityIcon = findViewById(R.id.detailSeverity);
+        severityIcon.setImageResource(detail.getSeverity().iconRes);
+        severityIcon.setContentDescription(getString(detail.getSeverity().labelRes));
+
+        ((TextView) findViewById(R.id.detailDescription)).setText(detail.getDescription());
+        ((TextView) findViewById(R.id.detailHelpText)).setText(detail.getHelpWhen());
+
+        // 4) القوائم: صف لكل خطوة وصف لكل تحذير
+        LayoutInflater inflater = LayoutInflater.from(this);
+
+        LinearLayout stepsContainer = findViewById(R.id.stepsContainer);
+        for (int i = 0; i < detail.getSteps().size(); i++) {
+            View row = inflater.inflate(R.layout.item_step, stepsContainer, false);
+            ((TextView) row.findViewById(R.id.stepNumber)).setText(String.valueOf(i + 1));
+            ((TextView) row.findViewById(R.id.stepText)).setText(detail.getSteps().get(i));
+            stepsContainer.addView(row);
+        }
+
+        LinearLayout dontsContainer = findViewById(R.id.dontsContainer);
+        for (String text : detail.getDonts()) {
+            View row = inflater.inflate(R.layout.item_dont, dontsContainer, false);
+            ((TextView) row.findViewById(R.id.dontText)).setText(text);
+            dontsContainer.addView(row);
+        }
+
+        // 5) زر الاتصال السفلي
+        findViewById(R.id.headerButton).setOnClickListener(v -> DialHelper.dialEmergency(this));
+    }
 }
 
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\HomeFragment.java =====
+package com.ahmed.firstaidhero1.ui;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ConcatAdapter;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.adapter.CardAdapter;
+import com.ahmed.firstaidhero1.adapter.HeaderAdapter;
+import com.ahmed.firstaidhero1.data.CaseRepository;
+import com.ahmed.firstaidhero1.util.DialHelper;
+
+public class HomeFragment extends Fragment {
+
+    public HomeFragment() {
+        super(R.layout.fragment_home);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
+
+        HeaderAdapter headerAdapter = new HeaderAdapter(v ->
+                DialHelper.dialEmergency(requireContext()));
+
+        CaseRepository repository = new CaseRepository(requireContext());
+        CardAdapter cardAdapter = new CardAdapter(repository.getCardItems(), item -> {
+            Intent intent = new Intent(requireContext(), EmergencyDetailActivity.class);
+            intent.putExtra(EmergencyDetailActivity.EXTRA_CASE_ID, item.getId());
+            startActivity(intent);
+        });
+
+        ConcatAdapter concatAdapter = new ConcatAdapter(headerAdapter, cardAdapter);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setAdapter(concatAdapter);
+    }
+}
 
 ===== app\src\main\java\com\ahmed\firstaidhero1\ui\MainActivity.java =====
 package com.ahmed.firstaidhero1.ui;
@@ -195,21 +500,20 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
-
-import android.widget.Toast;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import java.util.ArrayList;
-import java.util.List;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.ahmed.firstaidhero1.R;
-import com.ahmed.firstaidhero1.adapter.CardAdapter;
-import com.ahmed.firstaidhero1.adapter.HeaderAdapter;
-import com.ahmed.firstaidhero1.model.CardItem;
-
-import androidx.recyclerview.widget.ConcatAdapter;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG_HOME = "home";
+    private static final String TAG_CONTACTS = "contacts";
+    private static final String TAG_TREATED = "treated";
+    private static final String TAG_STATS = "stats";
+    private static final String[] TAGS = {TAG_HOME, TAG_CONTACTS, TAG_TREATED, TAG_STATS};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -217,15 +521,24 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightStatusBars(false);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom);
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            // الأعلى: مسؤولية AppBarLayout. الأسفل: الشريط السفلي بيتعامل مع شريط النظام لحاله،
+            // فهون نحسب بس الكيبورد
+            v.setPadding(systemBars.left, 0, systemBars.right, ime.bottom);
+            // الكيبورد مفتوح = نخفي الشريط السفلي حتى ما يطلع فوق الكيبورد
+            bottomNav.setVisibility(
+                    insets.isVisible(WindowInsetsCompat.Type.ime()) ? View.GONE : View.VISIBLE);
             return insets;
         });
 
+        // ---------- الشريط العلوي (نفس كودك السابق) ----------
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -234,10 +547,8 @@ public class MainActivity extends AppCompatActivity {
         ViewGroup toolbarContent = findViewById(R.id.toolbarContent);
         SearchView searchView = findViewById(R.id.searchView);
 
-
         View plate = searchView.findViewById(androidx.appcompat.R.id.search_plate);
         plate.setBackgroundColor(Color.TRANSPARENT);
-
 
         OnBackPressedCallback backCallback = new OnBackPressedCallback(false) {
             @Override
@@ -246,7 +557,6 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         getOnBackPressedDispatcher().addCallback(this, backCallback);
-
 
         searchView.setOnQueryTextFocusChangeListener((v, hasFocus) -> {
             TransitionManager.beginDelayedTransition(toolbarContent);
@@ -266,54 +576,193 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        // ---------- التنقل بين التبويبات ----------
+        setupFragments(savedInstanceState);
 
-        HeaderAdapter headerAdapter = new HeaderAdapter(v ->
-                Toast.makeText(this, "Button clicked", Toast.LENGTH_SHORT).show()); // حط هون منطق زرك القديم
-
-        CardAdapter cardAdapter = new CardAdapter(createDummyItems(), item ->
-                Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show());
-
-        ConcatAdapter concatAdapter = new ConcatAdapter(headerAdapter, cardAdapter);
-
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
-        layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
-            @Override
-            public int getSpanSize(int position) {
-                return position == 0 ? 2 : 1; // الزر ياخد العمودين، والكروت عمود لكل وحدة
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                showTab(TAG_HOME);
+            } else if (id == R.id.nav_contacts) {
+                showTab(TAG_CONTACTS);
+            } else if (id == R.id.nav_treated) {
+                showTab(TAG_TREATED);
+            } else if (id == R.id.nav_stats) {
+                showTab(TAG_STATS);
+            } else {
+                return false;
             }
+            return true;
         });
-
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setAdapter(concatAdapter);
     }
 
-    private List<CardItem> createDummyItems() {
-        List<CardItem> list = new ArrayList<>();
-        for (int i = 1; i <= 10; i++) {
-            list.add(new CardItem(
-                    getString(R.string.card_title, i),
-                    getString(R.string.card_subtitle, i),
-                    R.mipmap.ic_launcher));
+    private void setupFragments(Bundle savedInstanceState) {
+        // لو الشاشة انعادت (تدوير مثلاً)، الـ FragmentManager رجّع الـ Fragments لحاله
+        // ولو أضفناهم مرة تانية بيصيروا نسختين فوق بعض
+        if (savedInstanceState != null) return;
+
+        Fragment contacts = new ContactsFragment();
+        Fragment treated = new TreatedCasesFragment();
+        Fragment stats = new StatisticsFragment();
+
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .add(R.id.fragmentContainer, new HomeFragment(), TAG_HOME)
+                .add(R.id.fragmentContainer, contacts, TAG_CONTACTS).hide(contacts)
+                .add(R.id.fragmentContainer, treated, TAG_TREATED).hide(treated)
+                .add(R.id.fragmentContainer, stats, TAG_STATS).hide(stats)
+                .commit();
+    }
+
+    private void showTab(String selectedTag) {
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction().setReorderingAllowed(true);
+        for (String tag : TAGS) {
+            Fragment f = fm.findFragmentByTag(tag);
+            if (f == null) continue;
+            if (tag.equals(selectedTag)) ft.show(f);
+            else ft.hide(f);
         }
-        return list;
+        ft.commit();
     }
 }
 
-===== app\src\main\java\com\ahmed\firstaidhero1\ui\StatisticsActivity.java =====
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\StatisticsFragment.java =====
 package com.ahmed.firstaidhero1.ui;
 
-public class StatisticsActivity {
+import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import com.ahmed.firstaidhero1.R;
+
+public class StatisticsFragment extends Fragment {
+
+    public StatisticsFragment() {
+        super(R.layout.fragment_placeholder);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((TextView) view.findViewById(R.id.placeholderText)).setText(R.string.nav_stats);
+    }
 }
 
-
-===== app\src\main\java\com\ahmed\firstaidhero1\ui\TreatedCasesActivity.java =====
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\TreatedCasesFragment.java =====
 package com.ahmed.firstaidhero1.ui;
 
-public class TreatedCasesActivity {
+import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import com.ahmed.firstaidhero1.R;
+
+public class TreatedCasesFragment extends Fragment {
+
+    public TreatedCasesFragment() {
+        super(R.layout.fragment_placeholder);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((TextView) view.findViewById(R.id.placeholderText)).setText(R.string.nav_treated);
+    }
 }
 
+===== app\src\main\java\com\ahmed\firstaidhero1\util\DialHelper.java =====
+package com.ahmed.firstaidhero1.util;
+
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.widget.Toast;
+
+import com.ahmed.firstaidhero1.R;
+
+public final class DialHelper {
+
+    private DialHelper() {}
+
+    public static void dialEmergency(Context context) {
+        String number = context.getString(R.string.emergency_number);
+        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + number));
+        try {
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(context, R.string.no_dialer, Toast.LENGTH_SHORT).show();
+        }
+    }
+}
+
+===== app\src\main\res\drawable\ic_back.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:autoMirrored="true"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_call.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z" />
+</vector>
+
+
+===== app\src\main\res\drawable\ic_close.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/urgency_critical"
+        android:pathData="M19,6.41L17.59,5 12,10.59 6.41,5 5,6.41 10.59,12 5,17.59 6.41,19 12,13.41 17.59,19 19,17.59 13.41,12z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_contacts.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_home.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z" />
+</vector>
 
 ===== app\src\main\res\drawable\ic_launcher_background.xml =====
 <?xml version="1.0" encoding="utf-8"?>
@@ -424,6 +873,63 @@ public class TreatedCasesActivity {
         android:strokeColor="#00000000" />
 </vector>
 
+===== app\src\main\res\drawable\ic_severity_high.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="@color/urgency_critical" android:pathData="M3,15h5v6H3z" />
+    <path android:fillColor="@color/urgency_critical" android:pathData="M10,10h5v11h-5z" />
+    <path android:fillColor="@color/urgency_critical" android:pathData="M17,4h5v17h-5z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_severity_low.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="@color/urgency_mild" android:pathData="M3,15h5v6H3z" />
+    <path android:fillColor="@color/severity_empty" android:pathData="M10,10h5v11h-5z" />
+    <path android:fillColor="@color/severity_empty" android:pathData="M17,4h5v17h-5z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_severity_medium.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="@color/urgency_serious" android:pathData="M3,15h5v6H3z" />
+    <path android:fillColor="@color/urgency_serious" android:pathData="M10,10h5v11h-5z" />
+    <path android:fillColor="@color/severity_empty" android:pathData="M17,4h5v17h-5z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_stats.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M5,9.2h3L8,19L5,19zM10.6,5h2.8v14h-2.8zM16.2,13L19,13v6h-2.8z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_treated.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM10,17l-5,-5 1.41,-1.41L10,14.17l7.59,-7.59L19,8l-9,9z" />
+</vector>
+
 ===== app\src\main\res\drawable\search_bg.xml =====
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
@@ -432,12 +938,161 @@ public class TreatedCasesActivity {
     <corners android:radius="12dp" />
 </shape>
 
+===== app\src\main\res\drawable\step_number_bg.xml =====
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorPrimary" />
+</shape>
+
+===== app\src\main\res\layout\activity_emergency_detail.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/detailRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/detailAppBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/app_bar"
+        android:fitsSystemWindows="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/detailToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:navigationContentDescription="@string/back"
+            app:navigationIcon="@drawable/ic_back"
+            app:titleTextColor="@color/white" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:id="@+id/detailScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/detailAppBar"
+        app:layout_constraintBottom_toTopOf="@id/callBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/detailSeverity"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:id="@+id/detailDescription"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="?attr/colorSecondaryContainer"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/detail_help_title"
+                        android:textColor="?attr/colorOnSecondaryContainer"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/detailHelpText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:textColor="?attr/colorOnSecondaryContainer"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/detail_steps_title"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/stepsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/detail_donts_title"
+                android:textColor="@color/urgency_critical"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/dontsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </ScrollView>
+
+    <include
+        android:id="@+id/callBar"
+        layout="@layout/header_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
 ===== app\src\main\res\layout\activity_main.xml =====
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -447,7 +1102,7 @@ public class TreatedCasesActivity {
         android:id="@+id/appBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/primary"
+        android:background="@color/app_bar"
         android:fitsSystemWindows="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -474,9 +1129,8 @@ public class TreatedCasesActivity {
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:layout_marginEnd="12dp"
-                    android:background="#FF0000"
                     android:src="@drawable/logo1"
-                    android:contentDescription="Logo" />
+                    android:contentDescription="@string/logo_desc" />
 
                 <androidx.appcompat.widget.SearchView
                     android:id="@+id/searchView"
@@ -484,7 +1138,6 @@ public class TreatedCasesActivity {
                     android:layout_height="40dp"
                     android:layout_weight="1"
                     android:background="@drawable/search_bg"
-                    android:hint="@string/search_hint"
                     app:iconifiedByDefault="false"
                     app:queryHint="@string/search_hint" />
 
@@ -492,52 +1145,104 @@ public class TreatedCasesActivity {
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-
-    <!--<Button
-        android:id="@+id/btn_sos"
-        android:layout_width="259dp"
-        android:layout_height="99dp"
-        android:layout_marginTop="50dp"
-        android:shadowColor="@color/design_default_color_on_secondary"
-        android:text="@string/sos"
-        android:textColor="@color/background"
-        android:textColorLink="@color/background"
-        android:textSize="34sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/appBar"
-        app:strokeColor="@color/white" />-->
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="8dp"
-        android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/appBar"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:menu="@menu/bottom_nav_menu"
+        app:labelVisibilityMode="labeled"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
 </androidx.constraintlayout.widget.ConstraintLayout>
+
+===== app\src\main\res\layout\fragment_home.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.recyclerview.widget.RecyclerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/recyclerView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp"
+    android:clipToPadding="false" />
+
+===== app\src\main\res\layout\fragment_placeholder.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/placeholderText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textSize="20sp" />
+</FrameLayout>
 
 ===== app\src\main\res\layout\header_button.xml =====
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="8dp">
 
-    <com.google.android.material.button.MaterialButton
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/headerButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:foregroundGravity="center"
-        android:gravity="center"
-        android:text="@string/header_button" />
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@color/sos_red"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_call" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:text="@string/header_button"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:importantForAccessibility="no"
+                android:scaleX="-1"
+                android:src="@drawable/ic_call" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 </FrameLayout>
 
 ===== app\src\main\res\layout\item_card.xml =====
@@ -550,44 +1255,183 @@ public class TreatedCasesActivity {
     android:layout_margin="8dp"
     android:clickable="true"
     android:focusable="true"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/cardImage"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="@null"
+            app:shapeAppearanceOverlay="@style/ShapeRounded12" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/cardTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/cardDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <ImageView
-            android:id="@+id/cardImage"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:scaleType="centerCrop"
-            android:contentDescription="@null" />
+            android:id="@+id/cardSeverity"
+            android:layout_width="32dp"
+            android:layout_height="32dp" />
 
-        <TextView
-            android:id="@+id/cardTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:paddingBottom="2dp"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-        <TextView
-            android:id="@+id/cardSubtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="12dp"
-            android:textSize="13sp"
-            android:maxLines="2"
-            android:ellipsize="end" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
+
+===== app\src\main\res\layout\item_dont.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_close" />
+
+    <TextView
+        android:id="@+id/dontText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="16sp" />
+</LinearLayout>
+
+===== app\src\main\res\layout\item_step.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:id="@+id/stepNumber"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/step_number_bg"
+        android:gravity="center"
+        android:textColor="?attr/colorOnPrimary"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/stepText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="18sp" />
+</LinearLayout>
+
+===== app\src\main\res\menu\bottom_nav_menu.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="@string/nav_home" />
+    <item android:id="@+id/nav_contacts"
+        android:icon="@drawable/ic_contacts"
+        android:title="@string/nav_contacts" />
+    <item android:id="@+id/nav_treated"
+        android:icon="@drawable/ic_treated"
+        android:title="@string/nav_treated" />
+    <item android:id="@+id/nav_stats"
+        android:icon="@drawable/ic_stats"
+        android:title="@string/nav_stats" />
+</menu>
+
+===== app\src\main\res\values\cases.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sample content. Will move to SQLite later. -->
+
+    <string name="case_bleeding_title">Severe bleeding</string>
+    <string name="case_bleeding_desc">Press firmly and directly on the wound to stop the bleeding.</string>
+    <string name="case_bleeding_help">Call emergency services immediately for heavy bleeding. Do not wait.</string>
+    <string-array name="case_bleeding_steps">
+        <item>Wear gloves if available, and have the person sit or lie down.</item>
+        <item>Press firmly on the wound with a clean cloth or gauze.</item>
+        <item>Keep pressing without lifting your hand to check. If the cloth soaks through, add another on top.</item>
+        <item>Raise the injured limb if possible and secure a firm bandage over the cloth.</item>
+        <item>Stay with the person until help arrives and watch their breathing and alertness.</item>
+    </string-array>
+    <string-array name="case_bleeding_donts">
+        <item>Do not remove a soaked cloth. Add a new one on top.</item>
+        <item>Do not pull out an object stuck in the wound.</item>
+        <item>Do not use a tourniquet unless direct pressure fails to stop life-threatening bleeding from a limb.</item>
+    </string-array>
+
+    <string name="case_burns_title">Burns</string>
+    <string name="case_burns_desc">Cool the burn under cool running water for 10 to 20 minutes.</string>
+    <string name="case_burns_help">Call emergency services if the burn is large or deep, on the face, hands, genitals or over a joint, affects a child or an older person, or was caused by chemicals or electricity.</string>
+    <string-array name="case_burns_steps">
+        <item>Move the person away from the heat source and put out any flames.</item>
+        <item>Cool the burn with cool or lukewarm running water (not icy) for 10 to 20 minutes.</item>
+        <item>Remove rings, watches and tight items near the burn before swelling starts, unless stuck to the skin.</item>
+        <item>Cover the burn loosely with clean gauze or plastic cling film.</item>
+        <item>Get medical advice if you are unsure how serious the burn is.</item>
+    </string-array>
+    <string-array name="case_burns_donts">
+        <item>Do not apply ice or icy water.</item>
+        <item>Do not pop blisters.</item>
+        <item>Do not apply toothpaste, butter, oil or creams.</item>
+        <item>Do not remove clothing stuck to the skin.</item>
+    </string-array>
+
+    <string name="case_cut_title">Minor cut</string>
+    <string name="case_cut_desc">Wash the wound with clean running water and cover it with a clean dressing.</string>
+    <string name="case_cut_help">See a doctor if the cut is deep, very dirty, keeps bleeding, or if the person has not had a tetanus vaccine for many years.</string>
+    <string-array name="case_cut_steps">
+        <item>Wash your hands with soap and water before touching the wound.</item>
+        <item>Press on the cut with a clean cloth until the bleeding stops.</item>
+        <item>Rinse the wound under clean running water to remove dirt.</item>
+        <item>Gently dry around it and cover with a clean dressing or gauze.</item>
+        <item>Change the dressing daily and watch for redness, swelling or pus.</item>
+    </string-array>
+    <string-array name="case_cut_donts">
+        <item>Do not pour alcohol or hydrogen peroxide into the wound.</item>
+        <item>Do not touch the wound with unwashed hands.</item>
+    </string-array>
+</resources>
 
 ===== app\src\main\res\values\colors.xml =====
 <?xml version="1.0" encoding="utf-8"?>
@@ -597,6 +1441,21 @@ public class TreatedCasesActivity {
     <color name="accent">#490000</color>       <!-- لون التمييز (أزرار ثانوية، تأكيدات) -->
     <color name="background">#F5F7F6</color>   <!-- خلفية الشاشات -->
     <color name="white">#FFFFFF</color>
+    <color name="app_bar">#D70000</color>
+    <color name="sos_red">#D32F2F</color>
+    <color name="urgency_mild">#00796B</color>
+    <color name="urgency_serious">#E65100</color>
+    <color name="urgency_critical">#D32F2F</color>
+    <color name="severity_empty">#D9D9D9</color>
+</resources>
+
+===== app\src\main\res\values\shapes.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ShapeRounded12" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
 </resources>
 
 ===== app\src\main\res\values\strings.xml =====
@@ -606,8 +1465,22 @@ public class TreatedCasesActivity {
    <!-- <string name="sos">SOS</string>-->
     <string name="header_button">SOS</string>
     <string name="search_hint">Search .....</string>
-    <string name="card_title">card_title</string>
-    <string name="card_subtitle">card_subtitle</string>
+    <string name="card_title">Card %1$d</string>
+    <string name="card_subtitle">Description for card number %1$d</string>
+    <string name="logo_desc">App logo</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_contacts">Contacts</string>
+    <string name="nav_treated">Treated cases</string>
+    <string name="nav_stats">Statistics</string>
+    <string name="severity_low">Severity: low</string>
+    <string name="severity_medium">Severity: medium</string>
+    <string name="severity_high">Severity: high</string>
+    <string name="detail_help_title">When to get help</string>
+    <string name="detail_steps_title">What to do</string>
+    <string name="detail_donts_title">What not to do</string>
+    <string name="back">Back</string>
+    <string name="no_dialer">No phone app found on this device</string>
+    <string name="emergency_number" translatable="false">112</string>
 </resources>
 
 ===== app\src\main\res\values\themes.xml =====
@@ -615,12 +1488,66 @@ public class TreatedCasesActivity {
     <!-- Base application theme. -->
     <style name="Base.Theme.FirstAidHero1" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorOnPrimary">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/accent</item>
         <item name="android:colorBackground">@color/background</item>
+        <item name="colorSecondaryContainer">#FFDAD4</item>
+        <item name="colorOnSecondaryContainer">#410000</item>
     </style>
 
     <style name="Theme.FirstAidHero1" parent="Base.Theme.FirstAidHero1" />
+</resources>
+
+===== app\src\main\res\values-ar\cases.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="case_bleeding_title">نزيف حاد</string>
+    <string name="case_bleeding_desc">اضغط بقوة ومباشرة على الجرح لإيقاف النزيف.</string>
+    <string name="case_bleeding_help">اتصل بالإسعاف فوراً في حالة النزيف الغزير، ولا تنتظر.</string>
+    <string-array name="case_bleeding_steps">
+        <item>ارتدِ قفازات إن وُجدت، واجعل المصاب يجلس أو يستلقي.</item>
+        <item>اضغط بقوة على الجرح بقطعة قماش نظيفة أو شاش.</item>
+        <item>استمر بالضغط دون رفع يدك لتفقّد الجرح. إذا تشبّعت القماشة ضع أخرى فوقها.</item>
+        <item>ارفع الطرف المصاب إن أمكن، وثبّت ضماداً ضاغطاً فوق القماش.</item>
+        <item>ابقَ مع المصاب حتى يصل الإسعاف، وراقب تنفسه ووعيه.</item>
+    </string-array>
+    <string-array name="case_bleeding_donts">
+        <item>لا تنزع القماشة المتشبعة، بل ضع قماشة جديدة فوقها.</item>
+        <item>لا تحاول سحب جسم عالق في الجرح.</item>
+        <item>لا تستخدم الرباط الضاغط (تورنيكيه) إلا إذا فشل الضغط المباشر في إيقاف نزيف مهدد للحياة في أحد الأطراف.</item>
+    </string-array>
+
+    <string name="case_burns_title">حروق</string>
+    <string name="case_burns_desc">برّد الحرق بماء جارٍ بارد لمدة 10 إلى 20 دقيقة.</string>
+    <string name="case_burns_help">اتصل بالإسعاف إذا كان الحرق كبيراً أو عميقاً، أو في الوجه أو اليدين أو الأعضاء التناسلية أو فوق مفصل، أو كان المصاب طفلاً أو مسناً، أو كان السبب مواد كيميائية أو كهرباء.</string>
+    <string-array name="case_burns_steps">
+        <item>أبعد المصاب عن مصدر الحرارة وأطفئ أي نار.</item>
+        <item>برّد الحرق بماء جارٍ بارد أو فاتر (وليس مثلجاً) لمدة 10 إلى 20 دقيقة.</item>
+        <item>انزع الخواتم والساعات والأشياء الضيقة قرب الحرق قبل أن يتورم المكان، إلا إذا كانت ملتصقة بالجلد.</item>
+        <item>غطِّ الحرق بشاش نظيف أو غلاف بلاستيكي شفاف دون شدّ.</item>
+        <item>اطلب نصيحة طبية إذا لم تكن متأكداً من شدة الحرق.</item>
+    </string-array>
+    <string-array name="case_burns_donts">
+        <item>لا تضع ثلجاً ولا ماءً مثلجاً على الحرق.</item>
+        <item>لا تفقأ الفقاعات.</item>
+        <item>لا تضع معجون أسنان أو زبدة أو زيتاً أو كريمات.</item>
+        <item>لا تنزع الملابس الملتصقة بالجلد.</item>
+    </string-array>
+
+    <string name="case_cut_title">جرح سطحي</string>
+    <string name="case_cut_desc">اغسل الجرح بماء جارٍ نظيف وغطّه بضماد نظيف.</string>
+    <string name="case_cut_help">راجع الطبيب إذا كان الجرح عميقاً أو متسخاً جداً أو لا يتوقف نزيفه، أو إذا مرّت سنوات طويلة على آخر لقاح كزاز للمصاب.</string>
+    <string-array name="case_cut_steps">
+        <item>اغسل يديك بالماء والصابون قبل لمس الجرح.</item>
+        <item>اضغط على الجرح بقطعة قماش نظيفة حتى يتوقف النزيف.</item>
+        <item>اشطف الجرح بماء جارٍ نظيف لإزالة الأوساخ.</item>
+        <item>جفّف حوله برفق وغطّه بضماد أو شاش نظيف.</item>
+        <item>بدّل الضماد يومياً وراقب أي احمرار أو تورم أو صديد.</item>
+    </string-array>
+    <string-array name="case_cut_donts">
+        <item>لا تصب الكحول أو الماء الأكسجيني داخل الجرح.</item>
+        <item>لا تلمس الجرح بيدين غير نظيفتين.</item>
+    </string-array>
 </resources>
 
 ===== app\src\main\res\values-ar\strings.xml =====
@@ -631,16 +1558,47 @@ public class TreatedCasesActivity {
     <!--<string name="sos">اتصل بالطوارئ</string>-->
     <string name="header_button">اتصل بالطوارئ</string>
     <string name="search_hint">ابحث .....</string>
+    <string name="card_title">كرت %1$d</string>
+    <string name="card_subtitle">وصف الكرت رقم %1$d</string>
+    <string name="logo_desc">شعار التطبيق</string>
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_contacts">جهات الاتصال</string>
+    <string name="nav_treated">الحالات المعالجة</string>
+    <string name="nav_stats">الإحصائيات</string>
+    <string name="severity_low">درجة الخطورة: منخفضة</string>
+    <string name="severity_medium">درجة الخطورة: متوسطة</string>
+    <string name="severity_high">درجة الخطورة: عالية</string>
+    <string name="detail_help_title">متى تطلب المساعدة؟</string>
+    <string name="detail_steps_title">ماذا تفعل؟</string>
+    <string name="detail_donts_title">ما يجب تجنّبه</string>
+    <string name="back">رجوع</string>
+    <string name="no_dialer">لا يوجد تطبيق اتصال على هذا الجهاز</string>
+</resources>
+
+===== app\src\main\res\values-night\colors.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_bar">#7F1D1D</color>
+    <color name="urgency_mild">#4DB6AC</color>
+    <color name="urgency_serious">#FFA726</color>
+    <color name="urgency_critical">#FF5252</color>
+    <color name="severity_empty">#4A4A4A</color>
 </resources>
 
 ===== app\src\main\res\values-night\themes.xml =====
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.FirstAidHero1" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorOnPrimary">@color/primary_dark</item>
-        <item name="colorSecondary">@color/accent</item>
-        <item name="android:colorBackground">#1A0000</item>
+        <item name="colorPrimary">#D32F2F</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">#FF6659</item>
+        <item name="colorSecondaryContainer">#5A1A1A</item>
+        <item name="colorOnSecondaryContainer">#FFDAD4</item>
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorSurfaceContainer">#1E1E1E</item>
+        <item name="colorSurfaceContainerLow">#1E1E1E</item>
+        <item name="colorOnSurface">#F2F2F2</item>
+        <item name="colorOnSurfaceVariant">#B8B8B8</item>
     </style>
 </resources>
 
@@ -704,6 +1662,9 @@ public class TreatedCasesActivity {
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.EmergencyDetailActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

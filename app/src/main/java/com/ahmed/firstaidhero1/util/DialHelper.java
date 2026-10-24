@@ -13,8 +13,11 @@ public final class DialHelper {
     private DialHelper() {}
 
     public static void dialEmergency(Context context) {
-        String number = context.getString(R.string.emergency_number);
-        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + number));
+        dial(context, context.getString(R.string.emergency_number));
+    }
+
+    public static void dial(Context context, String number) {
+        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", number, null));
         try {
             context.startActivity(intent);
         } catch (ActivityNotFoundException e) {

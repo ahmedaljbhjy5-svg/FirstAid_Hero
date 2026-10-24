@@ -20,4 +20,16 @@
     <string name="detail_donts_title">ما يجب تجنّبه</string>
     <string name="back">رجوع</string>
     <string name="no_dialer">لا يوجد تطبيق اتصال على هذا الجهاز</string>
+    <string name="ambulance_label">الإسعاف</string>
+    <string name="contact_add_title">إضافة جهة اتصال</string>
+    <string name="contact_name_hint">الاسم (طبيب، مستشفى...)</string>
+    <string name="contact_phone_hint">رقم الهاتف</string>
+    <string name="contact_name_required">أدخل الاسم</string>
+    <string name="contact_phone_invalid">أدخل رقم هاتف صحيح</string>
+    <string name="contacts_empty_hint">اضغط + لإضافة رقم طبيبك أو أقرب مستشفى</string>
+    <string name="contact_delete_title">حذف جهة الاتصال؟</string>
+    <string name="contact_delete_message">سيتم حذف %1$s من قائمتك.</string>
+    <string name="save">حفظ</string>
+    <string name="cancel">إلغاء</string>
+    <string name="delete">حذف</string>
 </resources>
