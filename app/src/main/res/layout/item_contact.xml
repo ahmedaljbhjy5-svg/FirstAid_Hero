@@ -20,7 +20,7 @@
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
-
+            android:background="@drawable/step_number_bg"
             android:contentDescription="@null"
             android:padding="12dp"
             android:src="@drawable/ic_call" />
@@ -29,7 +29,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
+            android:layout_marginEnd="4dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -51,6 +51,14 @@
                 android:textDirection="ltr"
                 android:textSize="16sp" />
         </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/contactEdit"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/edit"
+            android:src="@drawable/ic_edit" />
 
         <ImageButton
             android:id="@+id/contactDelete"

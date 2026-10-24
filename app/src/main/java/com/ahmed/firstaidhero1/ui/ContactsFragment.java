@@ -17,6 +17,7 @@ import com.ahmed.firstaidhero1.adapter.ContactAdapter;
 import com.ahmed.firstaidhero1.data.ContactRepository;
 import com.ahmed.firstaidhero1.model.Contact;
 import com.ahmed.firstaidhero1.util.DialHelper;
+import com.ahmed.firstaidhero1.util.PhoneValidator;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -47,6 +48,11 @@ public class ContactsFragment extends Fragment {
             }
 
             @Override
+            public void onEdit(Contact contact) {
+                showContactDialog(contact);
+            }
+
+            @Override
             public void onDelete(Contact contact) {
                 confirmDelete(contact);
             }
@@ -56,20 +62,27 @@ public class ContactsFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
-        view.findViewById(R.id.addContactFab).setOnClickListener(v -> showAddDialog());
+        view.findViewById(R.id.addContactFab).setOnClickListener(v -> showContactDialog(null));
 
         reload();
     }
 
-    // نقرأ من القاعدة ونحدّث الشاشة
     private void reload() {
         List<Contact> contacts = repository.getAll();
         adapter.setItems(contacts);
-        // لو ما في غير صف الإسعاف، منعرض رسالة الإرشاد
-        emptyHint.setVisibility(contacts.size() <= 1 ? View.VISIBLE : View.GONE);
+
+        boolean hasUserContacts = false;
+        for (Contact c : contacts) {
+            if (!c.isBuiltIn()) {
+                hasUserContacts = true;
+                break;
+            }
+        }
+        emptyHint.setVisibility(hasUserContacts ? View.GONE : View.VISIBLE);
     }
 
-    private void showAddDialog() {
+    // نفس الحوار للإضافة (existing = null) وللتعديل (existing = الرقم الحالي)
+    private void showContactDialog(@Nullable Contact existing) {
         View form = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_add_contact, null);
         TextInputLayout nameLayout = form.findViewById(R.id.nameLayout);
@@ -77,34 +90,35 @@ public class ContactsFragment extends Fragment {
         TextInputLayout phoneLayout = form.findViewById(R.id.phoneLayout);
         TextInputEditText phoneInput = form.findViewById(R.id.phoneInput);
 
+        if (existing != null) {
+            nameInput.setText(existing.getName());
+            phoneInput.setText(existing.getPhone());
+        }
+
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.contact_add_title)
+                .setTitle(existing == null ? R.string.contact_add_title : R.string.contact_edit_title)
                 .setView(form)
-                .setPositiveButton(R.string.save, null) // null: بنعرّف الضغط بعد show()
+                .setPositiveButton(R.string.save, null)
                 .setNegativeButton(R.string.cancel, null)
                 .create();
         dialog.show();
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String name = textOf(nameInput);
+            String name = textOf(nameInput).replaceAll("\\s+", " ");
             String phone = textOf(phoneInput);
+            long editingId = existing == null ? -1 : existing.getId();
 
-            boolean valid = true;
-            if (name.isEmpty()) {
-                nameLayout.setError(getString(R.string.contact_name_required));
-                valid = false;
-            } else {
-                nameLayout.setError(null);
+            nameLayout.setError(validateName(name));
+            phoneLayout.setError(validatePhone(phone, editingId));
+            if (nameLayout.getError() != null || phoneLayout.getError() != null) {
+                return; // الحوار يضل مفتوح ويعرض الأخطاء
             }
-            if (!isValidPhone(phone)) {
-                phoneLayout.setError(getString(R.string.contact_phone_invalid));
-                valid = false;
-            } else {
-                phoneLayout.setError(null);
-            }
-            if (!valid) return; // الحوار يضل مفتوح ويعرض الأخطاء
 
-            repository.insert(name, phone);
+            if (existing == null) {
+                repository.insert(name, phone);
+            } else {
+                repository.update(existing.getId(), name, phone);
+            }
             dialog.dismiss();
             reload();
         });
@@ -122,13 +136,20 @@ public class ContactsFragment extends Fragment {
                 .show();
     }
 
-    private static String textOf(TextInputEditText input) {
-        return input.getText() == null ? "" : input.getText().toString().trim();
+    // كل دالة تحقق بترجع نص الخطأ، أو null إذا المدخل سليم
+    @Nullable
+    private String validateName(String name) {
+        return name.isEmpty() ? getString(R.string.contact_name_required) : null;
     }
 
-    // أرقام وأقواس و+ و- ومسافات فقط، وما يقل عن 3 أرقام
-    private static boolean isValidPhone(String phone) {
-        return phone.matches("[0-9+()\\-\\s]+")
-                && phone.replaceAll("[^0-9]", "").length() >= 3;
+    @Nullable
+    private String validatePhone(String phone, long excludeId) {
+        if (!PhoneValidator.isValid(phone)) return getString(R.string.contact_phone_invalid);
+        if (repository.phoneExists(phone, excludeId)) return getString(R.string.contact_phone_duplicate);
+        return null;
+    }
+
+    private static String textOf(TextInputEditText input) {
+        return input.getText() == null ? "" : input.getText().toString().trim();
     }
 }

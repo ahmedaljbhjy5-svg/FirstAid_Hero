@@ -14,9 +14,6 @@
     <string name="severity_low">درجة الخطورة: منخفضة</string>
     <string name="severity_medium">درجة الخطورة: متوسطة</string>
     <string name="severity_high">درجة الخطورة: عالية</string>
-    <string name="detail_help_title">متى تطلب المساعدة؟</string>
-    <string name="detail_steps_title">ماذا تفعل؟</string>
-    <string name="detail_donts_title">ما يجب تجنّبه</string>
     <string name="back">رجوع</string>
     <string name="no_dialer">لا يوجد تطبيق اتصال على هذا الجهاز</string>
     <string name="ambulance_label">الإسعاف</string>
@@ -34,4 +31,9 @@
     <string name="search_hint">ابحث: حروق، اختناق، لدغ...</string>
     <string name="search_no_results">لا توجد حالة مطابقة. جرّب كلمة أخرى.</string>
     <string name="detail_symptoms_title">الأعراض</string>
+    <string name="fire_label">الإطفاء</string>
+    <string name="police_label">الشرطة</string>
+    <string name="contact_edit_title">تعديل جهة اتصال</string>
+    <string name="edit">تعديل</string>
+    <string name="contact_phone_duplicate">هذا الرقم محفوظ مسبقاً</string>
 </resources>

@@ -19,6 +19,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
 
     public interface Listener {
         void onCall(Contact contact);
+        void onEdit(Contact contact);
         void onDelete(Contact contact);
     }
 
@@ -29,7 +30,6 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         this.listener = listener;
     }
 
-    // بنبدّل القائمة كاملة بعد كل إضافة أو حذف
     public void setItems(List<Contact> newItems) {
         items.clear();
         items.addAll(newItems);
@@ -49,8 +49,14 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         Contact contact = items.get(position);
         holder.name.setText(contact.getName());
         holder.phone.setText(contact.getPhone());
-        holder.delete.setVisibility(contact.isBuiltIn() ? View.GONE : View.VISIBLE);
+
+        // الأرقام العامة ما بتتعدل ولا بتنحذف: نخفي الزرين، ونعرضهم لباقي الصفوف (بسبب إعادة التدوير)
+        int visibility = contact.isBuiltIn() ? View.GONE : View.VISIBLE;
+        holder.edit.setVisibility(visibility);
+        holder.delete.setVisibility(visibility);
+
         holder.itemView.setOnClickListener(v -> listener.onCall(contact));
+        holder.edit.setOnClickListener(v -> listener.onEdit(contact));
         holder.delete.setOnClickListener(v -> listener.onDelete(contact));
     }
 
@@ -62,12 +68,14 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
     static class ContactViewHolder extends RecyclerView.ViewHolder {
         final TextView name;
         final TextView phone;
+        final ImageButton edit;
         final ImageButton delete;
 
         ContactViewHolder(@NonNull View itemView) {
             super(itemView);
             name = itemView.findViewById(R.id.contactName);
             phone = itemView.findViewById(R.id.contactPhone);
+            edit = itemView.findViewById(R.id.contactEdit);
             delete = itemView.findViewById(R.id.contactDelete);
         }
     }
