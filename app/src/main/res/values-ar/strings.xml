@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FirstAid Hero 1</string>
+    <string name="app_name">FirstAid Hero</string>
     <string name="Snake_Bite">لدغة افعى</string>
     <!--<string name="sos">اتصل بالطوارئ</string>-->
     <string name="header_button">اتصل بالطوارئ</string>

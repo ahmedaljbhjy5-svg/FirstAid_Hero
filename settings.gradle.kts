@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FirstAid(Hero 1"
+rootProject.name = "FirstAid Hero"
 include(":app")
  
