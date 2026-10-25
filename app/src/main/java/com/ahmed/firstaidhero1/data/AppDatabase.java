@@ -34,6 +34,14 @@ public class AppDatabase extends SQLiteOpenHelper {
     public static final String COL_NAME = "contact_name";
     public static final String COL_PHONE = "phone_number";
 
+    // جدول الحالات المعالجة
+    public static final String TABLE_TREATED = "treated_cases";
+    public static final String COL_TREATED_ID = "treated_id";
+    public static final String COL_DESCRIPTION = "description";
+    public static final String COL_TREATED_DATE = "treated_date";
+    public static final String COL_PHOTO = "photo_path";
+    public static final String COL_PROCEDURES = "procedures";
+
     private static AppDatabase instance;
 
     public static synchronized AppDatabase getInstance(Context context) {

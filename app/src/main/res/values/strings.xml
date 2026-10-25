@@ -39,4 +39,35 @@
     <string name="contact_edit_title">Edit contact</string>
     <string name="edit">Edit</string>
     <string name="contact_phone_duplicate">This number is already saved</string>
+    <string name="treated_title">Add treated case</string>
+    <string name="treated_description_hint">Case description</string>
+    <string name="treated_procedures_hint">Procedures performed</string>
+    <string name="treated_date_hint">Date</string>
+    <string name="treated_date_title">Select date</string>
+    <string name="treated_photo_label">Photo (optional)</string>
+    <string name="treated_add_photo">Add photo</string>
+    <string name="treated_change_photo">Change photo</string>
+    <string name="treated_remove_photo">Remove photo</string>
+    <string name="treated_photo_source_title">Add photo from</string>
+    <string name="photo_camera">Camera</string>
+    <string name="photo_gallery">Gallery</string>
+    <string name="treated_description_required">Enter the case description</string>
+    <string name="treated_procedures_required">Enter the procedures performed</string>
+    <string name="treated_date_future">The date cannot be in the future</string>
+    <string name="treated_save_failed">Could not save the case. Try again.</string>
+    <string name="no_camera">No camera app found</string>
+    <string name="treated_search_hint">Search cases or a date (2026-10)</string>
+    <string name="treated_empty">No treated cases yet. Tap + to record one.</string>
+    <string name="treated_delete_title">Delete this case?</string>
+    <string name="treated_delete_message">The case and its photo will be deleted permanently.</string>
+    <string name="severity_name_high">Critical</string>
+    <string name="severity_name_medium">Medium</string>
+    <string name="severity_name_low">Minor</string>
+
+    <string name="stats_emergencies_title">Cases by danger level</string>
+    <string name="stats_total_cases">%1$d cases in the guide</string>
+    <string name="stats_treated_title">Treated cases</string>
+    <string name="stats_treated_total">Total treated cases</string>
+    <string name="stats_by_month">By month</string>
+    <string name="stats_no_treated">No treated cases recorded yet</string>
 </resources>

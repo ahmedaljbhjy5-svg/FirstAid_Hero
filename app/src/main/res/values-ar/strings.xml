@@ -36,4 +36,35 @@
     <string name="contact_edit_title">تعديل جهة اتصال</string>
     <string name="edit">تعديل</string>
     <string name="contact_phone_duplicate">هذا الرقم محفوظ مسبقاً</string>
+    <string name="treated_title">إضافة حالة معالجة</string>
+    <string name="treated_description_hint">وصف الحالة</string>
+    <string name="treated_procedures_hint">الإجراءات التي تمت</string>
+    <string name="treated_date_hint">التاريخ</string>
+    <string name="treated_date_title">اختر التاريخ</string>
+    <string name="treated_photo_label">صورة (اختياري)</string>
+    <string name="treated_add_photo">إضافة صورة</string>
+    <string name="treated_change_photo">تغيير الصورة</string>
+    <string name="treated_remove_photo">حذف الصورة</string>
+    <string name="treated_photo_source_title">إضافة صورة من</string>
+    <string name="photo_camera">الكاميرا</string>
+    <string name="photo_gallery">المعرض</string>
+    <string name="treated_description_required">أدخل وصف الحالة</string>
+    <string name="treated_procedures_required">أدخل الإجراءات التي تمت</string>
+    <string name="treated_date_future">لا يمكن أن يكون التاريخ في المستقبل</string>
+    <string name="treated_save_failed">تعذّر حفظ الحالة. حاول مجدداً.</string>
+    <string name="no_camera">لا يوجد تطبيق كاميرا</string>
+    <string name="treated_search_hint">ابحث في الحالات أو تاريخ (2026-10)</string>
+    <string name="treated_empty">لا توجد حالات معالجة بعد. اضغط + لتسجيل حالة.</string>
+    <string name="treated_delete_title">حذف هذه الحالة؟</string>
+    <string name="treated_delete_message">ستُحذف الحالة وصورتها نهائياً.</string>
+    <string name="severity_name_high">حرجة</string>
+    <string name="severity_name_medium">متوسطة</string>
+    <string name="severity_name_low">طفيفة</string>
+
+    <string name="stats_emergencies_title">الحالات حسب درجة الخطورة</string>
+    <string name="stats_total_cases">%1$d حالة في الدليل</string>
+    <string name="stats_treated_title">الحالات المعالجة</string>
+    <string name="stats_treated_total">إجمالي الحالات المعالجة</string>
+    <string name="stats_by_month">حسب الشهر</string>
+    <string name="stats_no_treated">لا توجد حالات معالجة مسجّلة بعد</string>
 </resources>
