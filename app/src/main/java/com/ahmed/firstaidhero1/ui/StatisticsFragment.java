@@ -14,25 +14,34 @@ import androidx.fragment.app.Fragment;
 
 import com.ahmed.firstaidhero1.R;
 import com.ahmed.firstaidhero1.data.StatsRepository;
+import com.ahmed.firstaidhero1.model.CaseStat;
+import com.ahmed.firstaidhero1.model.DayStat;
 import com.ahmed.firstaidhero1.model.MonthStat;
 import com.ahmed.firstaidhero1.model.SeverityStat;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.format.FormatStyle;
 import java.util.List;
 import java.util.Locale;
 
+// كل الأرقام هون عن الحالات المعالجة اللي سجّلناها نحن (مش عن حالات الدليل)
 public class StatisticsFragment extends Fragment {
 
+    private static final int DAYS_SHOWN = 10;
+
     private StatsRepository repository;
-    private LinearLayout severityContainer;
-    private LinearLayout monthContainer;
-    private TextView emergenciesTotal;
     private TextView treatedTotal;
-    private TextView monthEmpty;
+    private TextView emptyView;
+    private View content;
+    private LinearLayout severityContainer;
+    private LinearLayout caseContainer;
+    private LinearLayout monthContainer;
+    private LinearLayout dayContainer;
 
     public StatisticsFragment() {
         super(R.layout.fragment_statistics);
@@ -43,11 +52,13 @@ public class StatisticsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         repository = new StatsRepository(requireContext());
-        severityContainer = view.findViewById(R.id.statsSeverityContainer);
-        monthContainer = view.findViewById(R.id.statsMonthContainer);
-        emergenciesTotal = view.findViewById(R.id.statsEmergenciesTotal);
         treatedTotal = view.findViewById(R.id.statsTreatedTotal);
-        monthEmpty = view.findViewById(R.id.statsMonthEmpty);
+        emptyView = view.findViewById(R.id.statsEmpty);
+        content = view.findViewById(R.id.statsContent);
+        severityContainer = view.findViewById(R.id.statsSeverityContainer);
+        caseContainer = view.findViewById(R.id.statsCaseContainer);
+        monthContainer = view.findViewById(R.id.statsMonthContainer);
+        dayContainer = view.findViewById(R.id.statsDayContainer);
 
         loadStats();
     }
@@ -63,14 +74,16 @@ public class StatisticsFragment extends Fragment {
     private void loadStats() {
         LayoutInflater inflater = LayoutInflater.from(requireContext());
 
-        // ---- الحالات حسب الخطورة ----
-        List<SeverityStat> severityStats = repository.getSeverityStats();
-        int total = 0;
-        for (SeverityStat stat : severityStats) total += stat.getCount();
-        emergenciesTotal.setText(getString(R.string.stats_total_cases, total));
+        int total = repository.getTreatedTotal();
+        treatedTotal.setText(String.valueOf(total));
+        boolean empty = total == 0;
+        emptyView.setVisibility(empty ? View.VISIBLE : View.GONE);
+        content.setVisibility(empty ? View.GONE : View.VISIBLE);
+        if (empty) return;
 
+        // ---- حسب الخطورة (نسبة من كل الحالات المعالجة) ----
         severityContainer.removeAllViews();
-        for (SeverityStat stat : severityStats) {
+        for (SeverityStat stat : repository.getSeverityStats()) {
             addRow(severityContainer, inflater,
                     stat.getSeverity().iconRes,
                     getString(stat.getSeverity().nameRes),
@@ -78,20 +91,39 @@ public class StatisticsFragment extends Fragment {
                     ContextCompat.getColor(requireContext(), stat.getSeverity().colorRes));
         }
 
-        // ---- الحالات المعالجة ----
-        treatedTotal.setText(String.valueOf(repository.getTreatedTotal()));
-
-        List<MonthStat> months = repository.getTreatedPerMonth();
-        monthContainer.removeAllViews();
-        monthEmpty.setVisibility(months.isEmpty() ? View.VISIBLE : View.GONE);
-
-        int maxMonth = 0;
-        for (MonthStat stat : months) maxMonth = Math.max(maxMonth, stat.getCount());
+        // ---- حسب اسم الحالة ----
+        List<CaseStat> cases = repository.getCaseStats();
+        int maxCase = 0;
+        for (CaseStat stat : cases) maxCase = Math.max(maxCase, stat.getCount());
+        caseContainer.removeAllViews();
+        for (CaseStat stat : cases) {
+            addRow(caseContainer, inflater,
+                    stat.getSeverity().iconRes,
+                    stat.getTitle(),
+                    stat.getCount(), maxCase,
+                    ContextCompat.getColor(requireContext(), stat.getSeverity().colorRes));
+        }
 
         int primary = MaterialColors.getColor(monthContainer, androidx.appcompat.R.attr.colorPrimary);
+
+        // ---- حسب الشهر ----
+        List<MonthStat> months = repository.getTreatedPerMonth();
+        int maxMonth = 0;
+        for (MonthStat stat : months) maxMonth = Math.max(maxMonth, stat.getCount());
+        monthContainer.removeAllViews();
         for (MonthStat stat : months) {
             addRow(monthContainer, inflater, 0,
                     formatMonth(stat.getMonth()), stat.getCount(), maxMonth, primary);
+        }
+
+        // ---- حسب اليوم (آخر أيام فيها تسجيل) ----
+        List<DayStat> days = repository.getTreatedPerDay(DAYS_SHOWN);
+        int maxDay = 0;
+        for (DayStat stat : days) maxDay = Math.max(maxDay, stat.getCount());
+        dayContainer.removeAllViews();
+        for (DayStat stat : days) {
+            addRow(dayContainer, inflater, 0,
+                    formatDay(stat.getDate()), stat.getCount(), maxDay, primary);
         }
     }
 
@@ -121,6 +153,14 @@ public class StatisticsFragment extends Fragment {
                     .format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()));
         } catch (DateTimeParseException e) {
             return yearMonth; // صيغة غير متوقعة: نعرضها كما هي بدل ما ننهار
+        }
+    }
+
+    private static String formatDay(String iso) {
+        try {
+            return LocalDate.parse(iso).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
+        } catch (DateTimeParseException e) {
+            return iso;
         }
     }
 }

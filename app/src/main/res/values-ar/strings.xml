@@ -60,11 +60,16 @@
     <string name="severity_name_high">حرجة</string>
     <string name="severity_name_medium">متوسطة</string>
     <string name="severity_name_low">طفيفة</string>
-
-    <string name="stats_emergencies_title">الحالات حسب درجة الخطورة</string>
-    <string name="stats_total_cases">%1$d حالة في الدليل</string>
     <string name="stats_treated_title">الحالات المعالجة</string>
     <string name="stats_treated_total">إجمالي الحالات المعالجة</string>
     <string name="stats_by_month">حسب الشهر</string>
     <string name="stats_no_treated">لا توجد حالات معالجة مسجّلة بعد</string>
+    <string name="stats_by_severity">حسب درجة الخطورة</string>
+    <string name="stats_by_case">حسب الحالة</string>
+    <string name="stats_by_day">حسب اليوم (آخر 10 أيام)</string>
+    <string name="treated_case_hint">الحالة</string>
+    <string name="treated_case_required">اختر الحالة</string>
+    <string name="detail_steps_title">الخطوات</string>
+    <string name="detail_source">المصدر: %1$s</string>
 </resources>
+

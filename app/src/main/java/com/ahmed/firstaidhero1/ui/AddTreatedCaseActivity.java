@@ -1,9 +1,14 @@
 package com.ahmed.firstaidhero1.ui;
 
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Filter;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -21,7 +26,9 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.data.EmergencyRepository;
 import com.ahmed.firstaidhero1.data.TreatedCaseRepository;
+import com.ahmed.firstaidhero1.model.CaseOption;
 import com.ahmed.firstaidhero1.util.PhotoStorage;
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
@@ -30,6 +37,7 @@ import com.google.android.material.datepicker.DateValidatorPointBackward;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -41,11 +49,13 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class AddTreatedCaseActivity extends AppCompatActivity {
 
+    private static final String STATE_CASE_ID = "state_case_id";
     private static final String STATE_DATE = "state_date";
     private static final String STATE_PHOTO = "state_photo";
     private static final String STATE_CAMERA_FILE = "state_camera_file";
@@ -53,6 +63,11 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
     // خيط خلفي واحد: معالجة الصورة والكتابة بالقاعدة ما بتنفّذ على الـ Main Thread
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
+    private TextInputLayout caseLayout;
+    private MaterialAutoCompleteTextView caseInput;
+    private View caseSeverityRow;
+    private ImageView caseSeverityIcon;
+    private TextView caseSeverityText;
     private TextInputLayout descriptionLayout;
     private TextInputLayout proceduresLayout;
     private TextInputLayout dateLayout;
@@ -63,6 +78,9 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
     private MaterialButton addPhotoButton;
     private MaterialButton removePhotoButton;
     private MaterialButton saveButton;
+
+    private List<CaseOption> caseOptions;
+    private long selectedCaseId = -1L; // -1 = ما اختار حالة بعد
 
     private LocalDate selectedDate = LocalDate.now();
     @Nullable private Uri photoUri;
@@ -103,6 +121,11 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
 
         ((Toolbar) findViewById(R.id.addToolbar)).setNavigationOnClickListener(v -> finish());
 
+        caseLayout = findViewById(R.id.caseLayout);
+        caseInput = findViewById(R.id.caseInput);
+        caseSeverityRow = findViewById(R.id.caseSeverityRow);
+        caseSeverityIcon = findViewById(R.id.caseSeverityIcon);
+        caseSeverityText = findViewById(R.id.caseSeverityText);
         descriptionLayout = findViewById(R.id.descriptionLayout);
         proceduresLayout = findViewById(R.id.proceduresLayout);
         dateLayout = findViewById(R.id.dateLayout);
@@ -115,6 +138,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         saveButton = findViewById(R.id.saveButton);
 
         restoreState(savedInstanceState);
+        setupCaseDropdown();
         updateDateField();
         updatePhotoUi();
 
@@ -128,6 +152,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putLong(STATE_CASE_ID, selectedCaseId);
         outState.putString(STATE_DATE, selectedDate.toString());
         if (photoUri != null) outState.putString(STATE_PHOTO, photoUri.toString());
         if (cameraFile != null) outState.putString(STATE_CAMERA_FILE, cameraFile.getPath());
@@ -141,6 +166,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
 
     private void restoreState(@Nullable Bundle state) {
         if (state == null) return;
+        selectedCaseId = state.getLong(STATE_CASE_ID, -1L);
         String date = state.getString(STATE_DATE);
         if (date != null) {
             try {
@@ -153,6 +179,61 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         if (photo != null) photoUri = Uri.parse(photo);
         String camera = state.getString(STATE_CAMERA_FILE);
         if (camera != null) cameraFile = new File(camera);
+    }
+
+    // ---------- اختيار الحالة (من قائمة الدليل فقط، بدون كتابة) ----------
+
+    private void setupCaseDropdown() {
+        caseOptions = new EmergencyRepository(this).getCaseOptions();
+        caseInput.setAdapter(new CaseAdapter(this, caseOptions));
+        caseInput.setOnItemClickListener((parent, view, position, rowId) -> {
+            caseLayout.setError(null);
+            showCase(caseOptions.get(position));
+        });
+        // بعد تدوير الشاشة أو تغيير اللغة: نرجّع الحالة المختارة (بالرقم، فاسمها بيتجدد بلغة الجهاز)
+        for (CaseOption option : caseOptions) {
+            if (option.getId() == selectedCaseId) {
+                showCase(option);
+                break;
+            }
+        }
+    }
+
+    private void showCase(CaseOption option) {
+        selectedCaseId = option.getId();
+        caseInput.setText(option.getTitle(), false); // false = بدون فلترة القائمة
+        caseSeverityIcon.setImageResource(option.getSeverity().iconRes);
+        caseSeverityText.setText(option.getSeverity().labelRes);
+        caseSeverityRow.setVisibility(View.VISIBLE);
+    }
+
+    // القائمة لازم تعرض كل الحالات دائماً (الـ ArrayAdapter العادي بيفلتر حسب النص المختار)
+    private static class CaseAdapter extends ArrayAdapter<CaseOption> {
+        private final List<CaseOption> all;
+
+        CaseAdapter(Context context, List<CaseOption> items) {
+            super(context, android.R.layout.simple_dropdown_item_1line, items);
+            this.all = items;
+        }
+
+        @NonNull
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence constraint) {
+                    FilterResults results = new FilterResults();
+                    results.values = all;
+                    results.count = all.size();
+                    return results;
+                }
+
+                @Override
+                protected void publishResults(CharSequence constraint, FilterResults results) {
+                    notifyDataSetChanged();
+                }
+            };
+        }
     }
 
     // ---------- التاريخ ----------
@@ -253,6 +334,8 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         String description = textOf(descriptionInput);
         String procedures = textOf(proceduresInput);
 
+        caseLayout.setError(selectedCaseId < 0
+                ? getString(R.string.treated_case_required) : null);
         descriptionLayout.setError(description.isEmpty()
                 ? getString(R.string.treated_description_required) : null);
         proceduresLayout.setError(procedures.isEmpty()
@@ -260,7 +343,8 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         dateLayout.setError(selectedDate.isAfter(LocalDate.now())
                 ? getString(R.string.treated_date_future) : null);
 
-        if (descriptionLayout.getError() != null
+        if (caseLayout.getError() != null
+                || descriptionLayout.getError() != null
                 || proceduresLayout.getError() != null
                 || dateLayout.getError() != null) {
             return; // الشاشة تضل مفتوحة وتعرض الأخطاء
@@ -269,6 +353,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         saveButton.setEnabled(false); // يمنع الضغط المزدوج
         final Uri photo = photoUri;
         final String dateIso = selectedDate.toString();
+        final long caseId = selectedCaseId;
 
         executor.execute(() -> {
             String relativePath = null;
@@ -277,7 +362,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
                     relativePath = PhotoStorage.saveScaledCopy(getApplicationContext(), photo);
                 }
                 new TreatedCaseRepository(getApplicationContext())
-                        .insert(description, procedures, dateIso, relativePath);
+                        .insert(caseId, description, procedures, dateIso, relativePath);
             } catch (IOException | RuntimeException e) {
                 // فشل أي جزء: نحذف الصورة اللي انحفظت (لتجنب ملف بدون صف) ونرجّع الزر
                 PhotoStorage.delete(getApplicationContext(), relativePath);
@@ -299,3 +384,4 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         return input.getText() == null ? "" : input.getText().toString().trim();
     }
 }
+

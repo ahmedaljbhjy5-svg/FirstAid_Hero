@@ -1,0 +1,3973 @@
+﻿
+===== app\src\androidTest\java\com\ahmed\firstaidhero1\ExampleInstrumentedTest.java =====
+package com.ahmed.firstaidhero1;
+
+import android.content.Context;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.*;
+
+/**
+ * Instrumented test, which will execute on an Android device.
+ *
+ * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
+ */
+@RunWith(AndroidJUnit4.class)
+public class ExampleInstrumentedTest {
+    @Test
+    public void useAppContext() {
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertEquals("com.ahmed.firstaidhero1", appContext.getPackageName());
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\adapter\CardAdapter.java =====
+package com.ahmed.firstaidhero1.adapter;
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.model.CardItem;
+
+public class CardAdapter extends ListAdapter<CardItem, CardAdapter.CardViewHolder> {
+
+    public interface OnItemClickListener {
+        void onItemClick(CardItem item);
+    }
+
+    // بتحدد شو تغيّر بين قائمتين، فالتحديث بيحرّك بس الصفوف المتأثرة
+    private static final DiffUtil.ItemCallback<CardItem> DIFF = new DiffUtil.ItemCallback<CardItem>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull CardItem a, @NonNull CardItem b) {
+            return a.getId() == b.getId();
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull CardItem a, @NonNull CardItem b) {
+            return a.getTitle().equals(b.getTitle())
+                    && a.getDescription().equals(b.getDescription())
+                    && a.getSeverity() == b.getSeverity();
+        }
+    };
+
+    private final OnItemClickListener listener;
+
+    public CardAdapter(OnItemClickListener listener) {
+        super(DIFF);
+        this.listener = listener;
+    }
+
+    @NonNull
+    @Override
+    public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_card, parent, false);
+        return new CardViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
+        CardItem item = getItem(position);
+        holder.title.setText(item.getTitle());
+        holder.description.setText(item.getDescription());
+        holder.image.setImageResource(item.getImageRes());
+        holder.severity.setImageResource(item.getSeverity().iconRes);
+        holder.severity.setContentDescription(
+                holder.itemView.getContext().getString(item.getSeverity().labelRes));
+        holder.itemView.setOnClickListener(v -> listener.onItemClick(item));
+    }
+
+    static class CardViewHolder extends RecyclerView.ViewHolder {
+        final ImageView image;
+        final ImageView severity;
+        final TextView title;
+        final TextView description;
+
+        CardViewHolder(@NonNull View itemView) {
+            super(itemView);
+            image = itemView.findViewById(R.id.cardImage);
+            severity = itemView.findViewById(R.id.cardSeverity);
+            title = itemView.findViewById(R.id.cardTitle);
+            description = itemView.findViewById(R.id.cardDescription);
+        }
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\adapter\ContactAdapter.java =====
+package com.ahmed.firstaidhero1.adapter;
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.model.Contact;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactViewHolder> {
+
+    public interface Listener {
+        void onCall(Contact contact);
+        void onEdit(Contact contact);
+        void onDelete(Contact contact);
+    }
+
+    private final List<Contact> items = new ArrayList<>();
+    private final Listener listener;
+
+    public ContactAdapter(Listener listener) {
+        this.listener = listener;
+    }
+
+    public void setItems(List<Contact> newItems) {
+        items.clear();
+        items.addAll(newItems);
+        notifyDataSetChanged();
+    }
+
+    @NonNull
+    @Override
+    public ContactViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_contact, parent, false);
+        return new ContactViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ContactViewHolder holder, int position) {
+        Contact contact = items.get(position);
+        holder.name.setText(contact.getName());
+        holder.phone.setText(contact.getPhone());
+
+        // الأرقام العامة ما بتتعدل ولا بتنحذف: نخفي الزرين، ونعرضهم لباقي الصفوف (بسبب إعادة التدوير)
+        int visibility = contact.isBuiltIn() ? View.GONE : View.VISIBLE;
+        holder.edit.setVisibility(visibility);
+        holder.delete.setVisibility(visibility);
+
+        holder.itemView.setOnClickListener(v -> listener.onCall(contact));
+        holder.edit.setOnClickListener(v -> listener.onEdit(contact));
+        holder.delete.setOnClickListener(v -> listener.onDelete(contact));
+    }
+
+    @Override
+    public int getItemCount() {
+        return items.size();
+    }
+
+    static class ContactViewHolder extends RecyclerView.ViewHolder {
+        final TextView name;
+        final TextView phone;
+        final ImageButton edit;
+        final ImageButton delete;
+
+        ContactViewHolder(@NonNull View itemView) {
+            super(itemView);
+            name = itemView.findViewById(R.id.contactName);
+            phone = itemView.findViewById(R.id.contactPhone);
+            edit = itemView.findViewById(R.id.contactEdit);
+            delete = itemView.findViewById(R.id.contactDelete);
+        }
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\adapter\HeaderAdapter.java =====
+package com.ahmed.firstaidhero1.adapter;
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahmed.firstaidhero1.R;
+
+public class HeaderAdapter extends RecyclerView.Adapter<HeaderAdapter.HeaderViewHolder> {
+
+    private final View.OnClickListener listener;
+
+    public HeaderAdapter(View.OnClickListener listener) {
+        this.listener = listener;
+    }
+
+    @NonNull
+    @Override
+    public HeaderViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.header_button, parent, false);
+        return new HeaderViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull HeaderViewHolder holder, int position) {
+        holder.itemView.findViewById(R.id.headerButton).setOnClickListener(listener);
+    }
+
+    @Override
+    public int getItemCount() {
+        return 1; // عنصر واحد بس: الزر
+    }
+
+    static class HeaderViewHolder extends RecyclerView.ViewHolder {
+        HeaderViewHolder(@NonNull View itemView) {
+            super(itemView);
+        }
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\adapter\TreatedCaseAdapter.java =====
+package com.ahmed.firstaidhero1.adapter;
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.model.TreatedCase;
+import com.ahmed.firstaidhero1.util.PhotoStorage;
+import com.bumptech.glide.Glide;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.FormatStyle;
+import java.util.Objects;
+
+public class TreatedCaseAdapter
+        extends ListAdapter<TreatedCase, TreatedCaseAdapter.TreatedViewHolder> {
+
+    public interface OnDeleteListener {
+        void onDelete(TreatedCase treatedCase);
+    }
+
+    private static final DiffUtil.ItemCallback<TreatedCase> DIFF =
+            new DiffUtil.ItemCallback<TreatedCase>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull TreatedCase a, @NonNull TreatedCase b) {
+                    return a.getId() == b.getId();
+                }
+
+                @Override
+                public boolean areContentsTheSame(@NonNull TreatedCase a, @NonNull TreatedCase b) {
+                    return a.getDescription().equals(b.getDescription())
+                            && a.getProcedures().equals(b.getProcedures())
+                            && a.getDate().equals(b.getDate())
+                            && Objects.equals(a.getPhotoPath(), b.getPhotoPath());
+                }
+            };
+
+    private final OnDeleteListener listener;
+
+    public TreatedCaseAdapter(OnDeleteListener listener) {
+        super(DIFF);
+        this.listener = listener;
+    }
+
+    @NonNull
+    @Override
+    public TreatedViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_treated_case, parent, false);
+        return new TreatedViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull TreatedViewHolder holder, int position) {
+        TreatedCase item = getItem(position);
+        holder.date.setText(formatDate(item.getDate()));
+        holder.description.setText(item.getDescription());
+        holder.procedures.setText(item.getProcedures());
+
+        // لازم نعالج الحالتين (بصورة وبدون) بكل bind بسبب إعادة التدوير
+        if (item.getPhotoPath() == null) {
+            Glide.with(holder.photo).clear(holder.photo);
+            holder.photo.setImageResource(R.drawable.ic_photo_placeholder);
+        } else {
+            Glide.with(holder.photo)
+                    .load(PhotoStorage.resolve(holder.itemView.getContext(), item.getPhotoPath()))
+                    .centerCrop()
+                    .placeholder(R.drawable.ic_photo_placeholder)
+                    .error(R.drawable.ic_photo_placeholder) // الملف انحذف أو تالف
+                    .into(holder.photo);
+        }
+
+        holder.delete.setOnClickListener(v -> listener.onDelete(item));
+    }
+
+    private static String formatDate(String iso) {
+        try {
+            return LocalDate.parse(iso).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
+        } catch (DateTimeParseException e) {
+            return iso; // صيغة غير متوقعة: نعرضها كما هي بدل ما ننهار
+        }
+    }
+
+    static class TreatedViewHolder extends RecyclerView.ViewHolder {
+        final ImageView photo;
+        final TextView date;
+        final TextView description;
+        final TextView procedures;
+        final ImageButton delete;
+
+        TreatedViewHolder(@NonNull View itemView) {
+            super(itemView);
+            photo = itemView.findViewById(R.id.treatedPhoto);
+            date = itemView.findViewById(R.id.treatedDate);
+            description = itemView.findViewById(R.id.treatedDescription);
+            procedures = itemView.findViewById(R.id.treatedProcedures);
+            delete = itemView.findViewById(R.id.treatedDelete);
+        }
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\data\AppDatabase.java =====
+package com.ahmed.firstaidhero1.data;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+public class AppDatabase extends SQLiteOpenHelper {
+
+    private static final String DB_NAME = "firstaid.db";
+    private static final int DB_VERSION = 1;
+
+    // جدول الحالات
+    public static final String TABLE_EMERGENCIES = "emergencies";
+    public static final String COL_CASE_ID = "case_id";
+    public static final String COL_TITLE = "title";
+    public static final String COL_DANGER = "danger_level";
+    public static final String COL_SYMPTOMS = "symptoms";
+    public static final String COL_SEARCH = "search_text";
+
+    // جدول الخطوات
+    public static final String TABLE_STEPS = "steps";
+    public static final String COL_STEP_NUMBER = "step_number";
+    public static final String COL_INSTRUCTION = "instruction_text";
+
+    // جدول الأرقام المخصصة
+    public static final String TABLE_CONTACTS = "custom_contacts";
+    public static final String COL_ID = "contact_id";
+    public static final String COL_NAME = "contact_name";
+    public static final String COL_PHONE = "phone_number";
+
+    // جدول الحالات المعالجة
+    public static final String TABLE_TREATED = "treated_cases";
+    public static final String COL_TREATED_ID = "treated_id";
+    public static final String COL_DESCRIPTION = "description";
+    public static final String COL_TREATED_DATE = "treated_date";
+    public static final String COL_PHOTO = "photo_path";
+    public static final String COL_PROCEDURES = "procedures";
+
+    private static AppDatabase instance;
+
+    public static synchronized AppDatabase getInstance(Context context) {
+        if (instance == null) {
+            Context app = context.getApplicationContext();
+            copyFromAssetsIfNeeded(app);
+            instance = new AppDatabase(app);
+        }
+        return instance;
+    }
+
+    private AppDatabase(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+    }
+
+    // بتنسخ القاعدة الجاهزة من assets مرة وحدة: أول تشغيل فقط
+    private static void copyFromAssetsIfNeeded(Context context) {
+        File dbFile = context.getDatabasePath(DB_NAME);
+        if (dbFile.exists()) return;
+
+        File dir = dbFile.getParentFile();
+        if (dir != null && !dir.exists() && !dir.mkdirs()) {
+            throw new IllegalStateException("Cannot create database directory: " + dir);
+        }
+
+        // ننسخ لملف مؤقت أولاً، وبعدها نعيد تسميته. لو انقطع النسخ بالنص ما بيضل ملف تالف
+        File tmp = new File(dir, DB_NAME + ".tmp");
+        try (InputStream in = context.getAssets().open(DB_NAME);
+             OutputStream out = new FileOutputStream(tmp)) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            out.flush();
+        } catch (IOException e) {
+            tmp.delete();
+            throw new IllegalStateException("Failed to copy " + DB_NAME + " from assets", e);
+        }
+
+        if (!tmp.renameTo(dbFile)) {
+            tmp.delete();
+            throw new IllegalStateException("Failed to install " + DB_NAME);
+        }
+    }
+
+    @Override
+    public void onConfigure(SQLiteDatabase db) {
+        super.onConfigure(db);
+        db.setForeignKeyConstraintsEnabled(true); // SQLite بيتجاهل المفاتيح الأجنبية ما لم نفعّلها
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // فاضية عن قصد: الجداول جاهزة داخل الملف المنسوخ (user_version = 1)
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // لاحقاً: ترفع DB_VERSION وتحط هون ALTER TABLE أو CREATE TABLE للتغييرات
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\data\ContactRepository.java =====
+package com.ahmed.firstaidhero1.data;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.model.Contact;
+import com.ahmed.firstaidhero1.util.PhoneValidator;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ContactRepository {
+
+    private final Context context;
+    private final AppDatabase helper;
+
+    public ContactRepository(Context context) {
+        this.context = context;
+        this.helper = AppDatabase.getInstance(context);
+    }
+
+    // الأرقام العامة الثابتة أولاً (id سالب = غير مخزّنة بالقاعدة)، وبعدها أرقام المستخدم بالاسم
+    public List<Contact> getAll() {
+        List<Contact> list = new ArrayList<>();
+        list.add(new Contact(-1, context.getString(R.string.ambulance_label),
+                context.getString(R.string.number_ambulance), true));
+        list.add(new Contact(-2, context.getString(R.string.fire_label),
+                context.getString(R.string.number_fire), true));
+        list.add(new Contact(-3, context.getString(R.string.police_label),
+                context.getString(R.string.number_police), true));
+
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.query(
+                AppDatabase.TABLE_CONTACTS,
+                null, null, null, null, null,
+                AppDatabase.COL_NAME + " COLLATE NOCASE ASC")) {
+
+            int idCol = c.getColumnIndexOrThrow(AppDatabase.COL_ID);
+            int nameCol = c.getColumnIndexOrThrow(AppDatabase.COL_NAME);
+            int phoneCol = c.getColumnIndexOrThrow(AppDatabase.COL_PHONE);
+
+            while (c.moveToNext()) {
+                list.add(new Contact(
+                        c.getLong(idCol),
+                        c.getString(nameCol),
+                        c.getString(phoneCol),
+                        false));
+            }
+        }
+        return list;
+    }
+
+    public long insert(String name, String phone) {
+        return helper.getWritableDatabase()
+                .insert(AppDatabase.TABLE_CONTACTS, null, values(name, phone));
+    }
+
+    // بترجع عدد الصفوف المعدّلة (0 = الصف انحذف قبل التعديل)
+    public int update(long id, String name, String phone) {
+        return helper.getWritableDatabase().update(
+                AppDatabase.TABLE_CONTACTS,
+                values(name, phone),
+                AppDatabase.COL_ID + " = ?",
+                new String[]{String.valueOf(id)});
+    }
+
+    public void delete(long id) {
+        helper.getWritableDatabase().delete(
+                AppDatabase.TABLE_CONTACTS,
+                AppDatabase.COL_ID + " = ?",
+                new String[]{String.valueOf(id)});
+    }
+
+    // هل الرقم محفوظ مسبقاً؟ excludeId = الصف اللي عم نعدّله (حتى ما يُعتبر مكرراً مع نفسه)
+    public boolean phoneExists(String phone, long excludeId) {
+        String target = PhoneValidator.canonical(phone);
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.query(
+                AppDatabase.TABLE_CONTACTS,
+                new String[]{AppDatabase.COL_ID, AppDatabase.COL_PHONE},
+                null, null, null, null, null)) {
+
+            int idCol = c.getColumnIndexOrThrow(AppDatabase.COL_ID);
+            int phoneCol = c.getColumnIndexOrThrow(AppDatabase.COL_PHONE);
+            while (c.moveToNext()) {
+                if (c.getLong(idCol) != excludeId
+                        && PhoneValidator.canonical(c.getString(phoneCol)).equals(target)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static ContentValues values(String name, String phone) {
+        ContentValues values = new ContentValues();
+        values.put(AppDatabase.COL_NAME, name);
+        values.put(AppDatabase.COL_PHONE, phone);
+        return values;
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\data\EmergencyRepository.java =====
+package com.ahmed.firstaidhero1.data;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.model.CardItem;
+import com.ahmed.firstaidhero1.model.CaseDetail;
+import com.ahmed.firstaidhero1.model.Severity;
+import com.ahmed.firstaidhero1.util.TextNormalizer;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class EmergencyRepository {
+
+    // الحرج أولاً، وداخل كل مستوى بترتيب إدخال الحالات (الأكثر شيوعاً أولاً)
+    private static final String DEFAULT_ORDER =
+            AppDatabase.COL_DANGER + " DESC, " + AppDatabase.COL_CASE_ID + " ASC";
+
+    private final AppDatabase helper;
+
+    public EmergencyRepository(Context context) {
+        this.helper = AppDatabase.getInstance(context);
+    }
+
+    // بحث فوري: كل كلمة بالاستعلام لازم تكون موجودة (AND)، والنص فاضي = كل الحالات
+    public List<CardItem> search(String rawQuery) {
+        StringBuilder where = new StringBuilder();
+        List<String> args = new ArrayList<>();
+        for (String token : TextNormalizer.normalize(rawQuery).split(" ")) {
+            if (token.isEmpty()) continue;
+            if (where.length() > 0) where.append(" AND ");
+            where.append(AppDatabase.COL_SEARCH).append(" LIKE ? ESCAPE '\\'");
+            args.add("%" + TextNormalizer.escapeLike(token) + "%");
+        }
+
+        List<CardItem> results = new ArrayList<>();
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.query(
+                AppDatabase.TABLE_EMERGENCIES,
+                new String[]{AppDatabase.COL_CASE_ID, AppDatabase.COL_TITLE,
+                        AppDatabase.COL_DANGER, AppDatabase.COL_SYMPTOMS},
+                where.length() == 0 ? null : where.toString(),
+                args.isEmpty() ? null : args.toArray(new String[0]),
+                null, null, DEFAULT_ORDER)) {
+
+            int idCol = c.getColumnIndexOrThrow(AppDatabase.COL_CASE_ID);
+            int titleCol = c.getColumnIndexOrThrow(AppDatabase.COL_TITLE);
+            int dangerCol = c.getColumnIndexOrThrow(AppDatabase.COL_DANGER);
+            int symptomsCol = c.getColumnIndexOrThrow(AppDatabase.COL_SYMPTOMS);
+
+            while (c.moveToNext()) {
+                results.add(new CardItem(
+                        c.getLong(idCol),
+                        c.getString(titleCol),
+                        c.getString(symptomsCol),
+                        Severity.fromLevel(c.getInt(dangerCol)),
+                        R.mipmap.ic_launcher)); // مؤقت لحد ما نجهّز الصور
+            }
+        }
+        return results;
+    }
+
+    // حالة كاملة مع خطواتها مرتبة، أو null إذا الرقم غير موجود
+    public CaseDetail getDetail(long caseId) {
+        SQLiteDatabase db = helper.getReadableDatabase();
+        String[] idArg = {String.valueOf(caseId)};
+
+        try (Cursor c = db.query(
+                AppDatabase.TABLE_EMERGENCIES,
+                new String[]{AppDatabase.COL_TITLE, AppDatabase.COL_DANGER, AppDatabase.COL_SYMPTOMS},
+                AppDatabase.COL_CASE_ID + " = ?", idArg, null, null, null)) {
+
+            if (!c.moveToFirst()) return null;
+
+            String title = c.getString(c.getColumnIndexOrThrow(AppDatabase.COL_TITLE));
+            Severity severity = Severity.fromLevel(c.getInt(c.getColumnIndexOrThrow(AppDatabase.COL_DANGER)));
+            String symptoms = c.getString(c.getColumnIndexOrThrow(AppDatabase.COL_SYMPTOMS));
+
+            List<String> steps = new ArrayList<>();
+            try (Cursor s = db.query(
+                    AppDatabase.TABLE_STEPS,
+                    new String[]{AppDatabase.COL_INSTRUCTION},
+                    AppDatabase.COL_CASE_ID + " = ?", idArg,
+                    null, null, AppDatabase.COL_STEP_NUMBER + " ASC")) {
+                int textCol = s.getColumnIndexOrThrow(AppDatabase.COL_INSTRUCTION);
+                while (s.moveToNext()) {
+                    steps.add(s.getString(textCol));
+                }
+            }
+            return new CaseDetail(caseId, title, severity, symptoms, steps);
+        }
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\data\StatsRepository.java =====
+package com.ahmed.firstaidhero1.data;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.ahmed.firstaidhero1.model.MonthStat;
+import com.ahmed.firstaidhero1.model.Severity;
+import com.ahmed.firstaidhero1.model.SeverityStat;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class StatsRepository {
+
+    private final AppDatabase helper;
+
+    public StatsRepository(Context context) {
+        this.helper = AppDatabase.getInstance(context);
+    }
+
+    // عدد الحالات بكل مستوى خطورة. الحرجة أولاً
+    public List<SeverityStat> getSeverityStats() {
+        // GROUP BY ما بيرجّع المجموعات الفاضية، فبنبدأ بأصفار ونعبّي اللي رجع
+        int[] counts = new int[Severity.values().length + 1]; // الفهرس = رقم المستوى (1 إلى 3)
+
+        String sql = "SELECT " + AppDatabase.COL_DANGER + ", COUNT(*) FROM "
+                + AppDatabase.TABLE_EMERGENCIES
+                + " GROUP BY " + AppDatabase.COL_DANGER;
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.rawQuery(sql, null)) {
+            while (c.moveToNext()) {
+                int level = c.getInt(0);
+                if (level >= 1 && level < counts.length) counts[level] = c.getInt(1);
+            }
+        }
+
+        List<SeverityStat> result = new ArrayList<>();
+        result.add(new SeverityStat(Severity.HIGH, counts[Severity.HIGH.level]));
+        result.add(new SeverityStat(Severity.MEDIUM, counts[Severity.MEDIUM.level]));
+        result.add(new SeverityStat(Severity.LOW, counts[Severity.LOW.level]));
+        return result;
+    }
+
+    // عدد الحالات المعالجة بكل شهر (yyyy-MM). الأحدث أولاً
+    public List<MonthStat> getTreatedPerMonth() {
+        String sql = "SELECT substr(" + AppDatabase.COL_TREATED_DATE + ", 1, 7) AS month, COUNT(*)"
+                + " FROM " + AppDatabase.TABLE_TREATED
+                + " GROUP BY month ORDER BY month DESC";
+        List<MonthStat> result = new ArrayList<>();
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.rawQuery(sql, null)) {
+            while (c.moveToNext()) {
+                result.add(new MonthStat(c.getString(0), c.getInt(1)));
+            }
+        }
+        return result;
+    }
+
+    public int getTreatedTotal() {
+        String sql = "SELECT COUNT(*) FROM " + AppDatabase.TABLE_TREATED;
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.rawQuery(sql, null)) {
+            return c.moveToFirst() ? c.getInt(0) : 0;
+        }
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\data\TreatedCaseRepository.java =====
+package com.ahmed.firstaidhero1.data;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+
+import androidx.annotation.Nullable;
+
+import com.ahmed.firstaidhero1.model.TreatedCase;
+import com.ahmed.firstaidhero1.util.TextNormalizer;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class TreatedCaseRepository {
+
+    private final AppDatabase helper;
+
+    public TreatedCaseRepository(Context context) {
+        this.helper = AppDatabase.getInstance(context);
+    }
+
+    // بترمي استثناء إذا فشل الإدخال، حتى يعرف المستدعي ويعرض رسالة بدل ما يظن إنه نجح
+    public long insert(String description, String procedures, String dateIso,
+                       @Nullable String photoPath) {
+        ContentValues values = new ContentValues();
+        values.put(AppDatabase.COL_DESCRIPTION, description);
+        values.put(AppDatabase.COL_PROCEDURES, procedures);
+        values.put(AppDatabase.COL_TREATED_DATE, dateIso);
+        values.put(AppDatabase.COL_PHOTO, photoPath); // null بتنخزّن NULL
+        long id = helper.getWritableDatabase().insert(AppDatabase.TABLE_TREATED, null, values);
+        if (id == -1) throw new SQLiteException("Insert into treated_cases failed");
+        return id;
+    }
+
+    // الأحدث أولاً. كل كلمة لازم تظهر بالوصف أو الإجراءات أو التاريخ (AND بين الكلمات، OR بين الأعمدة)
+    public List<TreatedCase> search(@Nullable String rawQuery) {
+        StringBuilder where = new StringBuilder();
+        List<String> args = new ArrayList<>();
+        String query = rawQuery == null ? "" : rawQuery.trim();
+        for (String token : query.split("\\s+")) {
+            if (token.isEmpty()) continue;
+            if (where.length() > 0) where.append(" AND ");
+            where.append("(")
+                    .append(AppDatabase.COL_DESCRIPTION).append(" LIKE ? ESCAPE '\\' OR ")
+                    .append(AppDatabase.COL_PROCEDURES).append(" LIKE ? ESCAPE '\\' OR ")
+                    .append(AppDatabase.COL_TREATED_DATE).append(" LIKE ? ESCAPE '\\')");
+            String like = "%" + TextNormalizer.escapeLike(token) + "%";
+            args.add(like);
+            args.add(like);
+            args.add(like);
+        }
+
+        List<TreatedCase> results = new ArrayList<>();
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.query(
+                AppDatabase.TABLE_TREATED,
+                null,
+                where.length() == 0 ? null : where.toString(),
+                args.isEmpty() ? null : args.toArray(new String[0]),
+                null, null,
+                AppDatabase.COL_TREATED_DATE + " DESC, " + AppDatabase.COL_TREATED_ID + " DESC")) {
+
+            int idCol = c.getColumnIndexOrThrow(AppDatabase.COL_TREATED_ID);
+            int descCol = c.getColumnIndexOrThrow(AppDatabase.COL_DESCRIPTION);
+            int procCol = c.getColumnIndexOrThrow(AppDatabase.COL_PROCEDURES);
+            int dateCol = c.getColumnIndexOrThrow(AppDatabase.COL_TREATED_DATE);
+            int photoCol = c.getColumnIndexOrThrow(AppDatabase.COL_PHOTO);
+
+            while (c.moveToNext()) {
+                results.add(new TreatedCase(
+                        c.getLong(idCol),
+                        c.getString(descCol),
+                        c.getString(procCol),
+                        c.getString(dateCol),
+                        c.getString(photoCol))); // null إذا NULL
+            }
+        }
+        return results;
+    }
+
+    // بتحذف الصف وبترجّع مسار صورته (إن وُجد) حتى يحذف المستدعي الملف
+    @Nullable
+    public String delete(long id) {
+        SQLiteDatabase db = helper.getWritableDatabase();
+        String[] idArg = {String.valueOf(id)};
+        String photo = null;
+        try (Cursor c = db.query(AppDatabase.TABLE_TREATED,
+                new String[]{AppDatabase.COL_PHOTO},
+                AppDatabase.COL_TREATED_ID + " = ?", idArg, null, null, null)) {
+            if (c.moveToFirst()) photo = c.getString(0);
+        }
+        db.delete(AppDatabase.TABLE_TREATED, AppDatabase.COL_TREATED_ID + " = ?", idArg);
+        return photo;
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\model\CardItem.java =====
+package com.ahmed.firstaidhero1.model;
+
+public class CardItem {
+    private final long id;
+    private final String title;
+    private final String description;
+    private final Severity severity;
+    private final int imageRes;
+
+    public CardItem(long id, String title, String description, Severity severity, int imageRes) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.severity = severity;
+        this.imageRes = imageRes;
+    }
+
+    public long getId() { return id; }
+    public String getTitle() { return title; }
+    public String getDescription() { return description; }
+    public Severity getSeverity() { return severity; }
+    public int getImageRes() { return imageRes; }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\model\CaseDetail.java =====
+package com.ahmed.firstaidhero1.model;
+
+import java.util.List;
+
+public class CaseDetail {
+    private final long id;
+    private final String title;
+    private final Severity severity;
+    private final String symptoms;
+    private final List<String> steps;
+
+    public CaseDetail(long id, String title, Severity severity, String symptoms, List<String> steps) {
+        this.id = id;
+        this.title = title;
+        this.severity = severity;
+        this.symptoms = symptoms;
+        this.steps = steps;
+    }
+
+    public long getId() { return id; }
+    public String getTitle() { return title; }
+    public Severity getSeverity() { return severity; }
+    public String getSymptoms() { return symptoms; }
+    public List<String> getSteps() { return steps; }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\model\Contact.java =====
+package com.ahmed.firstaidhero1.model;
+
+public class Contact {
+    private final long id;
+    private final String name;
+    private final String phone;
+    private final boolean builtIn;
+
+    public Contact(long id, String name, String phone, boolean builtIn) {
+        this.id = id;
+        this.name = name;
+        this.phone = phone;
+        this.builtIn = builtIn;
+    }
+
+    public long getId() { return id; }
+    public String getName() { return name; }
+    public String getPhone() { return phone; }
+    public boolean isBuiltIn() { return builtIn; }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\model\MonthStat.java =====
+package com.ahmed.firstaidhero1.model;
+
+public class MonthStat {
+    private final String month; // yyyy-MM
+    private final int count;
+
+    public MonthStat(String month, int count) {
+        this.month = month;
+        this.count = count;
+    }
+
+    public String getMonth() { return month; }
+    public int getCount() { return count; }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\model\Severity.java =====
+package com.ahmed.firstaidhero1.model;
+
+import com.ahmed.firstaidhero1.R;
+
+public enum Severity {
+    LOW(1, R.drawable.ic_severity_low, R.string.severity_low,
+            R.string.severity_name_low, R.color.urgency_mild),
+    MEDIUM(2, R.drawable.ic_severity_medium, R.string.severity_medium,
+            R.string.severity_name_medium, R.color.urgency_serious),
+    HIGH(3, R.drawable.ic_severity_high, R.string.severity_high,
+            R.string.severity_name_high, R.color.urgency_critical);
+
+    public final int level;
+    public final int iconRes;
+    public final int labelRes;   // نص طويل لقارئ الشاشة
+    public final int nameRes;    // اسم قصير للعرض (حرجة، متوسطة، طفيفة)
+    public final int colorRes;
+
+    Severity(int level, int iconRes, int labelRes, int nameRes, int colorRes) {
+        this.level = level;
+        this.iconRes = iconRes;
+        this.labelRes = labelRes;
+        this.nameRes = nameRes;
+        this.colorRes = colorRes;
+    }
+
+    // لقراءة القيمة من قاعدة البيانات. قيمة تالفة = نفترض الأخطر
+    public static Severity fromLevel(int level) {
+        for (Severity s : values()) {
+            if (s.level == level) return s;
+        }
+        return HIGH;
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\model\SeverityStat.java =====
+package com.ahmed.firstaidhero1.model;
+
+public class SeverityStat {
+    private final Severity severity;
+    private final int count;
+
+    public SeverityStat(Severity severity, int count) {
+        this.severity = severity;
+        this.count = count;
+    }
+
+    public Severity getSeverity() { return severity; }
+    public int getCount() { return count; }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\model\TreatedCase.java =====
+package com.ahmed.firstaidhero1.model;
+
+import androidx.annotation.Nullable;
+
+public class TreatedCase {
+    private final long id;
+    private final String description;
+    private final String procedures;
+    private final String date;          // yyyy-MM-dd
+    @Nullable private final String photoPath; // مسار نسبي داخل files/، أو null
+
+    public TreatedCase(long id, String description, String procedures,
+                       String date, @Nullable String photoPath) {
+        this.id = id;
+        this.description = description;
+        this.procedures = procedures;
+        this.date = date;
+        this.photoPath = photoPath;
+    }
+
+    public long getId() { return id; }
+    public String getDescription() { return description; }
+    public String getProcedures() { return procedures; }
+    public String getDate() { return date; }
+    @Nullable public String getPhotoPath() { return photoPath; }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\AddTreatedCaseActivity.java =====
+package com.ahmed.firstaidhero1.ui;
+
+import android.content.ActivityNotFoundException;
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.data.TreatedCaseRepository;
+import com.ahmed.firstaidhero1.util.PhotoStorage;
+import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointBackward;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.FormatStyle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class AddTreatedCaseActivity extends AppCompatActivity {
+
+    private static final String STATE_DATE = "state_date";
+    private static final String STATE_PHOTO = "state_photo";
+    private static final String STATE_CAMERA_FILE = "state_camera_file";
+
+    // خيط خلفي واحد: معالجة الصورة والكتابة بالقاعدة ما بتنفّذ على الـ Main Thread
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private TextInputLayout descriptionLayout;
+    private TextInputLayout proceduresLayout;
+    private TextInputLayout dateLayout;
+    private TextInputEditText descriptionInput;
+    private TextInputEditText proceduresInput;
+    private TextInputEditText dateInput;
+    private ShapeableImageView photoPreview;
+    private MaterialButton addPhotoButton;
+    private MaterialButton removePhotoButton;
+    private MaterialButton saveButton;
+
+    private LocalDate selectedDate = LocalDate.now();
+    @Nullable private Uri photoUri;
+    @Nullable private File cameraFile;
+
+    // لازم تتسجّل قبل أن تبدأ الـ Activity، لهيك هي حقول وليست داخل onCreate
+    private final ActivityResultLauncher<PickVisualMediaRequest> galleryLauncher =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri != null) setPhoto(uri);
+            });
+
+    private final ActivityResultLauncher<Uri> cameraLauncher =
+            registerForActivityResult(new ActivityResultContracts.TakePicture(), taken -> {
+                if (taken && cameraFile != null) {
+                    setPhoto(uriFor(cameraFile));
+                } else {
+                    discardCameraFile();
+                }
+            });
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_add_treated_case);
+
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.addRoot), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            // زر الحفظ بيرتفع فوق الكيبورد لما يفتح
+            v.setPadding(systemBars.left, 0, systemBars.right,
+                    Math.max(systemBars.bottom, ime.bottom));
+            return insets;
+        });
+
+        ((Toolbar) findViewById(R.id.addToolbar)).setNavigationOnClickListener(v -> finish());
+
+        descriptionLayout = findViewById(R.id.descriptionLayout);
+        proceduresLayout = findViewById(R.id.proceduresLayout);
+        dateLayout = findViewById(R.id.dateLayout);
+        descriptionInput = findViewById(R.id.descriptionInput);
+        proceduresInput = findViewById(R.id.proceduresInput);
+        dateInput = findViewById(R.id.dateInput);
+        photoPreview = findViewById(R.id.photoPreview);
+        addPhotoButton = findViewById(R.id.addPhotoButton);
+        removePhotoButton = findViewById(R.id.removePhotoButton);
+        saveButton = findViewById(R.id.saveButton);
+
+        restoreState(savedInstanceState);
+        updateDateField();
+        updatePhotoUi();
+
+        dateInput.setOnClickListener(v -> showDatePicker());
+        dateLayout.setEndIconOnClickListener(v -> showDatePicker());
+        addPhotoButton.setOnClickListener(v -> showPhotoSourceDialog());
+        removePhotoButton.setOnClickListener(v -> clearPhoto());
+        saveButton.setOnClickListener(v -> save());
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(STATE_DATE, selectedDate.toString());
+        if (photoUri != null) outState.putString(STATE_PHOTO, photoUri.toString());
+        if (cameraFile != null) outState.putString(STATE_CAMERA_FILE, cameraFile.getPath());
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdown(); // بيخلي المهمة الجارية تكمل ولا بيقبل جديدة
+    }
+
+    private void restoreState(@Nullable Bundle state) {
+        if (state == null) return;
+        String date = state.getString(STATE_DATE);
+        if (date != null) {
+            try {
+                selectedDate = LocalDate.parse(date);
+            } catch (DateTimeParseException ignored) {
+                // قيمة تالفة: نضل على تاريخ اليوم
+            }
+        }
+        String photo = state.getString(STATE_PHOTO);
+        if (photo != null) photoUri = Uri.parse(photo);
+        String camera = state.getString(STATE_CAMERA_FILE);
+        if (camera != null) cameraFile = new File(camera);
+    }
+
+    // ---------- التاريخ ----------
+
+    private void updateDateField() {
+        dateInput.setText(selectedDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)));
+    }
+
+    private void showDatePicker() {
+        // MaterialDatePicker بيتعامل مع التواريخ كـ "منتصف الليل UTC"، فنحوّل بنفس المنطق
+        long todayUtc = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+        long selectedUtc = selectedDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+
+        MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText(R.string.treated_date_title)
+                .setSelection(selectedUtc)
+                .setCalendarConstraints(new CalendarConstraints.Builder()
+                        .setValidator(DateValidatorPointBackward.before(todayUtc)) // لا مستقبل
+                        .build())
+                .build();
+        picker.addOnPositiveButtonClickListener(selection -> {
+            selectedDate = Instant.ofEpochMilli(selection).atZone(ZoneOffset.UTC).toLocalDate();
+            dateLayout.setError(null);
+            updateDateField();
+        });
+        picker.show(getSupportFragmentManager(), "date_picker");
+    }
+
+    // ---------- الصورة ----------
+
+    private void showPhotoSourceDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.treated_photo_source_title)
+                .setItems(new CharSequence[]{
+                        getString(R.string.photo_camera),
+                        getString(R.string.photo_gallery)
+                }, (dialog, which) -> {
+                    if (which == 0) launchCamera();
+                    else launchGallery();
+                })
+                .show();
+    }
+
+    private void launchGallery() {
+        galleryLauncher.launch(new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build());
+    }
+
+    private void launchCamera() {
+        try {
+            File dir = new File(getCacheDir(), "camera");
+            if (!dir.exists() && !dir.mkdirs()) throw new IOException("Cannot create " + dir);
+            cameraFile = File.createTempFile("camera_", ".jpg", dir);
+            cameraLauncher.launch(uriFor(cameraFile));
+        } catch (IOException | ActivityNotFoundException e) {
+            discardCameraFile();
+            Toast.makeText(this, R.string.no_camera, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Uri uriFor(File file) {
+        return FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+    }
+
+    private void discardCameraFile() {
+        if (cameraFile != null) {
+            //noinspection ResultOfMethodCallIgnored
+            cameraFile.delete();
+            cameraFile = null;
+        }
+    }
+
+    private void setPhoto(Uri uri) {
+        photoUri = uri;
+        updatePhotoUi();
+    }
+
+    private void clearPhoto() {
+        photoUri = null;
+        discardCameraFile();
+        updatePhotoUi();
+    }
+
+    private void updatePhotoUi() {
+        boolean hasPhoto = photoUri != null;
+        photoPreview.setVisibility(hasPhoto ? View.VISIBLE : View.GONE);
+        removePhotoButton.setVisibility(hasPhoto ? View.VISIBLE : View.GONE);
+        addPhotoButton.setText(hasPhoto ? R.string.treated_change_photo : R.string.treated_add_photo);
+        if (hasPhoto) {
+            Glide.with(this).load(photoUri).centerCrop().into(photoPreview);
+        }
+    }
+
+    // ---------- الحفظ ----------
+
+    private void save() {
+        String description = textOf(descriptionInput);
+        String procedures = textOf(proceduresInput);
+
+        descriptionLayout.setError(description.isEmpty()
+                ? getString(R.string.treated_description_required) : null);
+        proceduresLayout.setError(procedures.isEmpty()
+                ? getString(R.string.treated_procedures_required) : null);
+        dateLayout.setError(selectedDate.isAfter(LocalDate.now())
+                ? getString(R.string.treated_date_future) : null);
+
+        if (descriptionLayout.getError() != null
+                || proceduresLayout.getError() != null
+                || dateLayout.getError() != null) {
+            return; // الشاشة تضل مفتوحة وتعرض الأخطاء
+        }
+
+        saveButton.setEnabled(false); // يمنع الضغط المزدوج
+        final Uri photo = photoUri;
+        final String dateIso = selectedDate.toString();
+
+        executor.execute(() -> {
+            String relativePath = null;
+            try {
+                if (photo != null) {
+                    relativePath = PhotoStorage.saveScaledCopy(getApplicationContext(), photo);
+                }
+                new TreatedCaseRepository(getApplicationContext())
+                        .insert(description, procedures, dateIso, relativePath);
+            } catch (IOException | RuntimeException e) {
+                // فشل أي جزء: نحذف الصورة اللي انحفظت (لتجنب ملف بدون صف) ونرجّع الزر
+                PhotoStorage.delete(getApplicationContext(), relativePath);
+                runOnUiThread(() -> {
+                    saveButton.setEnabled(true);
+                    Toast.makeText(this, R.string.treated_save_failed, Toast.LENGTH_LONG).show();
+                });
+                return;
+            }
+            discardCameraFile();
+            runOnUiThread(() -> {
+                setResult(RESULT_OK);
+                finish();
+            });
+        });
+    }
+
+    private static String textOf(TextInputEditText input) {
+        return input.getText() == null ? "" : input.getText().toString().trim();
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\ContactsFragment.java =====
+package com.ahmed.firstaidhero1.ui;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.adapter.ContactAdapter;
+import com.ahmed.firstaidhero1.data.ContactRepository;
+import com.ahmed.firstaidhero1.model.Contact;
+import com.ahmed.firstaidhero1.util.DialHelper;
+import com.ahmed.firstaidhero1.util.PhoneValidator;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+
+import java.util.List;
+
+public class ContactsFragment extends Fragment {
+
+    private ContactRepository repository;
+    private ContactAdapter adapter;
+    private TextView emptyHint;
+
+    public ContactsFragment() {
+        super(R.layout.fragment_contacts);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        repository = new ContactRepository(requireContext());
+        emptyHint = view.findViewById(R.id.contactsEmpty);
+
+        adapter = new ContactAdapter(new ContactAdapter.Listener() {
+            @Override
+            public void onCall(Contact contact) {
+                DialHelper.dial(requireContext(), contact.getPhone());
+            }
+
+            @Override
+            public void onEdit(Contact contact) {
+                showContactDialog(contact);
+            }
+
+            @Override
+            public void onDelete(Contact contact) {
+                confirmDelete(contact);
+            }
+        });
+
+        RecyclerView recyclerView = view.findViewById(R.id.contactsRecycler);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setAdapter(adapter);
+
+        view.findViewById(R.id.addContactFab).setOnClickListener(v -> showContactDialog(null));
+
+        reload();
+    }
+
+    private void reload() {
+        List<Contact> contacts = repository.getAll();
+        adapter.setItems(contacts);
+
+        boolean hasUserContacts = false;
+        for (Contact c : contacts) {
+            if (!c.isBuiltIn()) {
+                hasUserContacts = true;
+                break;
+            }
+        }
+        emptyHint.setVisibility(hasUserContacts ? View.GONE : View.VISIBLE);
+    }
+
+    // نفس الحوار للإضافة (existing = null) وللتعديل (existing = الرقم الحالي)
+    private void showContactDialog(@Nullable Contact existing) {
+        View form = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_add_contact, null);
+        TextInputLayout nameLayout = form.findViewById(R.id.nameLayout);
+        TextInputEditText nameInput = form.findViewById(R.id.nameInput);
+        TextInputLayout phoneLayout = form.findViewById(R.id.phoneLayout);
+        TextInputEditText phoneInput = form.findViewById(R.id.phoneInput);
+
+        if (existing != null) {
+            nameInput.setText(existing.getName());
+            phoneInput.setText(existing.getPhone());
+        }
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(existing == null ? R.string.contact_add_title : R.string.contact_edit_title)
+                .setView(form)
+                .setPositiveButton(R.string.save, null)
+                .setNegativeButton(R.string.cancel, null)
+                .create();
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String name = textOf(nameInput).replaceAll("\\s+", " ");
+            String phone = textOf(phoneInput);
+            long editingId = existing == null ? -1 : existing.getId();
+
+            nameLayout.setError(validateName(name));
+            phoneLayout.setError(validatePhone(phone, editingId));
+            if (nameLayout.getError() != null || phoneLayout.getError() != null) {
+                return; // الحوار يضل مفتوح ويعرض الأخطاء
+            }
+
+            if (existing == null) {
+                repository.insert(name, phone);
+            } else {
+                repository.update(existing.getId(), name, phone);
+            }
+            dialog.dismiss();
+            reload();
+        });
+    }
+
+    private void confirmDelete(Contact contact) {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.contact_delete_title)
+                .setMessage(getString(R.string.contact_delete_message, contact.getName()))
+                .setPositiveButton(R.string.delete, (d, which) -> {
+                    repository.delete(contact.getId());
+                    reload();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    // كل دالة تحقق بترجع نص الخطأ، أو null إذا المدخل سليم
+    @Nullable
+    private String validateName(String name) {
+        return name.isEmpty() ? getString(R.string.contact_name_required) : null;
+    }
+
+    @Nullable
+    private String validatePhone(String phone, long excludeId) {
+        if (!PhoneValidator.isValid(phone)) return getString(R.string.contact_phone_invalid);
+        if (repository.phoneExists(phone, excludeId)) return getString(R.string.contact_phone_duplicate);
+        return null;
+    }
+
+    private static String textOf(TextInputEditText input) {
+        return input.getText() == null ? "" : input.getText().toString().trim();
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\EmergencyDetailActivity.java =====
+package com.ahmed.firstaidhero1.ui;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.data.EmergencyRepository;
+import com.ahmed.firstaidhero1.model.CaseDetail;
+import com.ahmed.firstaidhero1.util.DialHelper;
+
+public class EmergencyDetailActivity extends AppCompatActivity {
+
+    public static final String EXTRA_CASE_ID = "case_id";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_emergency_detail);
+
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.detailRoot), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        long caseId = getIntent().getLongExtra(EXTRA_CASE_ID, -1L);
+        CaseDetail detail = new EmergencyRepository(this).getDetail(caseId);
+        if (detail == null) {
+            finish(); // رقم غير صالح: نسكّر الشاشة بدل ما ننهار
+            return;
+        }
+
+        Toolbar toolbar = findViewById(R.id.detailToolbar);
+        toolbar.setTitle(detail.getTitle());
+        toolbar.setNavigationOnClickListener(v -> finish());
+
+        ImageView severityIcon = findViewById(R.id.detailSeverity);
+        severityIcon.setImageResource(detail.getSeverity().iconRes);
+        ((TextView) findViewById(R.id.detailSeverityLabel)).setText(detail.getSeverity().labelRes);
+        ((TextView) findViewById(R.id.detailSymptoms)).setText(detail.getSymptoms());
+
+        LinearLayout stepsContainer = findViewById(R.id.stepsContainer);
+        LayoutInflater inflater = LayoutInflater.from(this);
+        for (int i = 0; i < detail.getSteps().size(); i++) {
+            View row = inflater.inflate(R.layout.item_step, stepsContainer, false);
+            ((TextView) row.findViewById(R.id.stepNumber)).setText(String.valueOf(i + 1));
+            ((TextView) row.findViewById(R.id.stepText)).setText(detail.getSteps().get(i));
+            stepsContainer.addView(row);
+        }
+
+        findViewById(R.id.headerButton).setOnClickListener(v -> DialHelper.dialEmergency(this));
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\HomeFragment.java =====
+package com.ahmed.firstaidhero1.ui;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ConcatAdapter;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.adapter.CardAdapter;
+import com.ahmed.firstaidhero1.adapter.HeaderAdapter;
+import com.ahmed.firstaidhero1.data.EmergencyRepository;
+import com.ahmed.firstaidhero1.model.CardItem;
+import com.ahmed.firstaidhero1.util.DialHelper;
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.List;
+
+public class HomeFragment extends Fragment {
+
+    private EmergencyRepository repository;
+    private CardAdapter cardAdapter;
+    private View emptyView;
+
+    public HomeFragment() {
+        super(R.layout.fragment_home);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        repository = new EmergencyRepository(requireContext());
+        emptyView = view.findViewById(R.id.homeEmpty);
+
+        HeaderAdapter headerAdapter = new HeaderAdapter(v ->
+                DialHelper.dialEmergency(requireContext()));
+        cardAdapter = new CardAdapter(this::openDetail);
+
+        RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setAdapter(new ConcatAdapter(headerAdapter, cardAdapter));
+
+        TextInputEditText searchInput = view.findViewById(R.id.homeSearchInput);
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) { }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                runSearch(s.toString()); // مع كل حرف
+            }
+        });
+
+        runSearch(searchInput.getText() == null ? "" : searchInput.getText().toString());
+    }
+
+    private void runSearch(String query) {
+        List<CardItem> results = repository.search(query);
+        cardAdapter.submitList(results);
+        emptyView.setVisibility(results.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void openDetail(CardItem item) {
+        Intent intent = new Intent(requireContext(), EmergencyDetailActivity.class);
+        intent.putExtra(EmergencyDetailActivity.EXTRA_CASE_ID, item.getId());
+        startActivity(intent);
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\MainActivity.java =====
+package com.ahmed.firstaidhero1.ui;
+
+import android.os.Bundle;
+import android.view.View;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
+import com.ahmed.firstaidhero1.R;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG_HOME = "home";
+    private static final String TAG_CONTACTS = "contacts";
+    private static final String TAG_TREATED = "treated";
+    private static final String TAG_STATS = "stats";
+    private static final String[] TAGS = {TAG_HOME, TAG_CONTACTS, TAG_TREATED, TAG_STATS};
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            v.setPadding(systemBars.left, 0, systemBars.right, ime.bottom);
+            bottomNav.setVisibility(
+                    insets.isVisible(WindowInsetsCompat.Type.ime()) ? View.GONE : View.VISIBLE);
+            return insets;
+        });
+
+        setupFragments(savedInstanceState);
+
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                showTab(TAG_HOME);
+            } else if (id == R.id.nav_contacts) {
+                showTab(TAG_CONTACTS);
+            } else if (id == R.id.nav_treated) {
+                showTab(TAG_TREATED);
+            } else if (id == R.id.nav_stats) {
+                showTab(TAG_STATS);
+            } else {
+                return false;
+            }
+            return true;
+        });
+    }
+
+    private void setupFragments(Bundle savedInstanceState) {
+        if (savedInstanceState != null) return;
+
+        Fragment contacts = new ContactsFragment();
+        Fragment treated = new TreatedCasesFragment();
+        Fragment stats = new StatisticsFragment();
+
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .add(R.id.fragmentContainer, new HomeFragment(), TAG_HOME)
+                .add(R.id.fragmentContainer, contacts, TAG_CONTACTS).hide(contacts)
+                .add(R.id.fragmentContainer, treated, TAG_TREATED).hide(treated)
+                .add(R.id.fragmentContainer, stats, TAG_STATS).hide(stats)
+                .commit();
+    }
+
+    private void showTab(String selectedTag) {
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction().setReorderingAllowed(true);
+        for (String tag : TAGS) {
+            Fragment f = fm.findFragmentByTag(tag);
+            if (f == null) continue;
+            if (tag.equals(selectedTag)) ft.show(f);
+            else ft.hide(f);
+        }
+        ft.commit();
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\StatisticsFragment.java =====
+package com.ahmed.firstaidhero1.ui;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.data.StatsRepository;
+import com.ahmed.firstaidhero1.model.MonthStat;
+import com.ahmed.firstaidhero1.model.SeverityStat;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Locale;
+
+public class StatisticsFragment extends Fragment {
+
+    private StatsRepository repository;
+    private LinearLayout severityContainer;
+    private LinearLayout monthContainer;
+    private TextView emergenciesTotal;
+    private TextView treatedTotal;
+    private TextView monthEmpty;
+
+    public StatisticsFragment() {
+        super(R.layout.fragment_statistics);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        repository = new StatsRepository(requireContext());
+        severityContainer = view.findViewById(R.id.statsSeverityContainer);
+        monthContainer = view.findViewById(R.id.statsMonthContainer);
+        emergenciesTotal = view.findViewById(R.id.statsEmergenciesTotal);
+        treatedTotal = view.findViewById(R.id.statsTreatedTotal);
+        monthEmpty = view.findViewById(R.id.statsMonthEmpty);
+
+        loadStats();
+    }
+
+    // التبويبات عندنا بتُخفى وتُظهر (hide/show) وما بتنهدم، فما بيتنفذ onViewCreated مرة تانية.
+    // هالدالة بتنادي كل ما التبويب يظهر، حتى نشوف الحالات اللي انضافت من تبويب تاني
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) loadStats();
+    }
+
+    private void loadStats() {
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+
+        // ---- الحالات حسب الخطورة ----
+        List<SeverityStat> severityStats = repository.getSeverityStats();
+        int total = 0;
+        for (SeverityStat stat : severityStats) total += stat.getCount();
+        emergenciesTotal.setText(getString(R.string.stats_total_cases, total));
+
+        severityContainer.removeAllViews();
+        for (SeverityStat stat : severityStats) {
+            addRow(severityContainer, inflater,
+                    stat.getSeverity().iconRes,
+                    getString(stat.getSeverity().nameRes),
+                    stat.getCount(), total,
+                    ContextCompat.getColor(requireContext(), stat.getSeverity().colorRes));
+        }
+
+        // ---- الحالات المعالجة ----
+        treatedTotal.setText(String.valueOf(repository.getTreatedTotal()));
+
+        List<MonthStat> months = repository.getTreatedPerMonth();
+        monthContainer.removeAllViews();
+        monthEmpty.setVisibility(months.isEmpty() ? View.VISIBLE : View.GONE);
+
+        int maxMonth = 0;
+        for (MonthStat stat : months) maxMonth = Math.max(maxMonth, stat.getCount());
+
+        int primary = MaterialColors.getColor(monthContainer, androidx.appcompat.R.attr.colorPrimary);
+        for (MonthStat stat : months) {
+            addRow(monthContainer, inflater, 0,
+                    formatMonth(stat.getMonth()), stat.getCount(), maxMonth, primary);
+        }
+    }
+
+    // iconRes = 0 يعني بدون أيقونة
+    private void addRow(LinearLayout container, LayoutInflater inflater, int iconRes,
+                        String label, int count, int max, int color) {
+        View row = inflater.inflate(R.layout.item_stat_row, container, false);
+
+        ImageView icon = row.findViewById(R.id.statIcon);
+        if (iconRes == 0) icon.setVisibility(View.GONE);
+        else icon.setImageResource(iconRes);
+
+        ((TextView) row.findViewById(R.id.statLabel)).setText(label);
+        ((TextView) row.findViewById(R.id.statCount)).setText(String.valueOf(count));
+
+        LinearProgressIndicator bar = row.findViewById(R.id.statBar);
+        bar.setMax(Math.max(max, 1)); // max = 0 غير مسموح
+        bar.setIndicatorColor(color);
+        bar.setProgressCompat(count, false);
+
+        container.addView(row);
+    }
+
+    private static String formatMonth(String yearMonth) {
+        try {
+            return YearMonth.parse(yearMonth)
+                    .format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()));
+        } catch (DateTimeParseException e) {
+            return yearMonth; // صيغة غير متوقعة: نعرضها كما هي بدل ما ننهار
+        }
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\ui\TreatedCasesFragment.java =====
+package com.ahmed.firstaidhero1.ui;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahmed.firstaidhero1.R;
+import com.ahmed.firstaidhero1.adapter.TreatedCaseAdapter;
+import com.ahmed.firstaidhero1.data.TreatedCaseRepository;
+import com.ahmed.firstaidhero1.model.TreatedCase;
+import com.ahmed.firstaidhero1.util.PhotoStorage;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.List;
+
+public class TreatedCasesFragment extends Fragment {
+
+    private TreatedCaseRepository repository;
+    private TreatedCaseAdapter adapter;
+    private TextView emptyView;
+    private String currentQuery = "";
+
+    // نتيجة شاشة الإضافة: لو انحفظت حالة، نعيد تحميل القائمة
+    private final ActivityResultLauncher<Intent> addLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) reload();
+            });
+
+    public TreatedCasesFragment() {
+        super(R.layout.fragment_treated_cases);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        repository = new TreatedCaseRepository(requireContext());
+        emptyView = view.findViewById(R.id.treatedEmpty);
+
+        adapter = new TreatedCaseAdapter(this::confirmDelete);
+        RecyclerView recyclerView = view.findViewById(R.id.treatedRecycler);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setAdapter(adapter);
+
+        TextInputEditText searchInput = view.findViewById(R.id.treatedSearchInput);
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) { }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                currentQuery = s.toString();
+                reload();
+            }
+        });
+
+        view.findViewById(R.id.addTreatedFab).setOnClickListener(v ->
+                addLauncher.launch(new Intent(requireContext(), AddTreatedCaseActivity.class)));
+
+        reload();
+    }
+
+    private void reload() {
+        List<TreatedCase> cases = repository.search(currentQuery);
+        adapter.submitList(cases);
+        emptyView.setText(currentQuery.trim().isEmpty()
+                ? R.string.treated_empty : R.string.search_no_results);
+        emptyView.setVisibility(cases.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void confirmDelete(TreatedCase treatedCase) {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.treated_delete_title)
+                .setMessage(R.string.treated_delete_message)
+                .setPositiveButton(R.string.delete, (dialog, which) -> {
+                    String photoPath = repository.delete(treatedCase.getId());
+                    PhotoStorage.delete(requireContext(), photoPath);
+                    reload();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\util\DialHelper.java =====
+package com.ahmed.firstaidhero1.util;
+
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.widget.Toast;
+
+import com.ahmed.firstaidhero1.R;
+
+public final class DialHelper {
+
+    private DialHelper() {}
+
+    public static void dialEmergency(Context context) {
+        dial(context, context.getString(R.string.emergency_number));
+    }
+
+    public static void dial(Context context, String number) {
+        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", number, null));
+        try {
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(context, R.string.no_dialer, Toast.LENGTH_SHORT).show();
+        }
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\util\PhoneValidator.java =====
+package com.ahmed.firstaidhero1.util;
+
+import java.util.regex.Pattern;
+
+public final class PhoneValidator {
+
+    // + اختيارية وبالبداية فقط، بعدها أرقام ومسافات وشرطات وأقواس
+    private static final Pattern ALLOWED = Pattern.compile("^\\+?[0-9\\s\\-()]{3,20}$");
+
+    private PhoneValidator() {}
+
+    public static boolean isValid(String phone) {
+        if (phone == null || !ALLOWED.matcher(phone).matches()) return false;
+        int digits = canonical(phone).replace("+", "").length();
+        return digits >= 3 && digits <= 15; // 15 = أقصى طول لرقم دولي (معيار E.164)
+    }
+
+    // الرقم بدون مسافات وشرطات وأقواس: للمقارنة واكتشاف التكرار
+    public static String canonical(String phone) {
+        return phone.replaceAll("[\\s\\-()]", "");
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\util\PhotoStorage.java =====
+package com.ahmed.firstaidhero1.util;
+
+import android.content.ContentResolver;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import android.net.Uri;
+
+import androidx.annotation.Nullable;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.UUID;
+
+public final class PhotoStorage {
+
+    private static final String DIR = "photos";
+    private static final int MAX_SIDE_PX = 1280;
+    private static final int JPEG_QUALITY = 85;
+
+    private PhotoStorage() {}
+
+    public static File resolve(Context context, String relativePath) {
+        return new File(context.getFilesDir(), relativePath);
+    }
+
+    public static void delete(Context context, @Nullable String relativePath) {
+        if (relativePath == null) return;
+        File file = resolve(context, relativePath);
+        if (file.exists() && !file.delete()) file.deleteOnExit();
+    }
+
+    // بتقرأ الصورة من أي Uri، بتصغّرها وبتصحح اتجاهها، وبتحفظها JPEG. بترجّع المسار النسبي
+    public static String saveScaledCopy(Context context, Uri source) throws IOException {
+        ContentResolver resolver = context.getContentResolver();
+
+        // 1) قياس الأبعاد فقط، بدون تحميل الصورة بالذاكرة
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        try (InputStream in = open(resolver, source)) {
+            BitmapFactory.decodeStream(in, null, bounds);
+        }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+            throw new IOException("Not a valid image: " + source);
+        }
+
+        // 2) تحميل نسخة مصغّرة بنسبة قوة 2 (أسرع وأوفر بالذاكرة)
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight);
+        Bitmap decoded;
+        try (InputStream in = open(resolver, source)) {
+            decoded = BitmapFactory.decodeStream(in, null, options);
+        }
+        if (decoded == null) throw new IOException("Could not decode image");
+
+        // 3) تدوير حسب EXIF + تصغير للحجم النهائي بخطوة وحدة
+        int rotation = readRotation(resolver, source);
+        float scale = Math.min(1f, (float) MAX_SIDE_PX / Math.max(decoded.getWidth(), decoded.getHeight()));
+        Bitmap result = decoded;
+        if (rotation != 0 || scale < 1f) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(rotation);
+            matrix.postScale(scale, scale);
+            result = Bitmap.createBitmap(decoded, 0, 0, decoded.getWidth(), decoded.getHeight(), matrix, true);
+            if (result != decoded) decoded.recycle();
+        }
+
+        // 4) حفظ JPEG بمجلد التطبيق الخاص
+        File dir = new File(context.getFilesDir(), DIR);
+        if (!dir.exists() && !dir.mkdirs()) throw new IOException("Cannot create " + dir);
+        String relative = DIR + "/" + UUID.randomUUID() + ".jpg";
+        File dest = resolve(context, relative);
+        try (OutputStream out = new FileOutputStream(dest)) {
+            if (!result.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)) {
+                throw new IOException("Compress failed");
+            }
+        } catch (IOException e) {
+            dest.delete();
+            throw e;
+        } finally {
+            result.recycle();
+        }
+        return relative;
+    }
+
+    private static InputStream open(ContentResolver resolver, Uri uri) throws IOException {
+        InputStream in = resolver.openInputStream(uri);
+        if (in == null) throw new IOException("Cannot open " + uri);
+        return in;
+    }
+
+    // أكبر قوة 2 بتخلي الأبعاد لسا >= الحجم المطلوب
+    private static int sampleSize(int width, int height) {
+        int sample = 1;
+        while (Math.max(width, height) / (sample * 2) >= MAX_SIDE_PX) {
+            sample *= 2;
+        }
+        return sample;
+    }
+
+    private static int readRotation(ContentResolver resolver, Uri uri) {
+        try (InputStream in = resolver.openInputStream(uri)) {
+            if (in == null) return 0;
+            ExifInterface exif = new ExifInterface(in);
+            switch (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL)) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    return 90;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    return 180;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    return 270;
+                default:
+                    return 0;
+            }
+        } catch (IOException e) {
+            return 0; // ما قدرنا نقرأ EXIF: نعتبر الصورة معتدلة
+        }
+    }
+}
+
+===== app\src\main\java\com\ahmed\firstaidhero1\util\TextNormalizer.java =====
+package com.ahmed.firstaidhero1.util;
+
+import java.util.Locale;
+
+public final class TextNormalizer {
+
+    private TextNormalizer() {}
+
+    // لازم تطابق دالة normalize بملف build_db.py بالضبط، وإلا ما بيتطابق البحث
+    public static String normalize(String input) {
+        if (input == null) return "";
+        StringBuilder sb = new StringBuilder(input.length());
+        for (char c : input.toLowerCase(Locale.ROOT).toCharArray()) {
+            if ((c >= '\u064B' && c <= '\u0652') || c == '\u0640') continue; // تشكيل وتطويل
+            switch (c) {
+                case '\u0623': // أ
+                case '\u0625': // إ
+                case '\u0622': // آ
+                    sb.append('\u0627'); // ا
+                    break;
+                case '\u0649': // ى
+                    sb.append('\u064A'); // ي
+                    break;
+                case '\u0629': // ة
+                    sb.append('\u0647'); // ه
+                    break;
+                default:
+                    sb.append(c);
+            }
+        }
+        return sb.toString().trim().replaceAll("\\s+", " ");
+    }
+
+    // بيعطّل الرموز الخاصة بـ LIKE (% و _) حتى تُعامل كحروف عادية
+    public static String escapeLike(String token) {
+        return token.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+}
+
+===== app\src\main\res\drawable\ic_add.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M19,13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_back.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:autoMirrored="true"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_calendar.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M19,4h-1V2h-2v2H8V2H6v2H5C3.89,4 3.01,4.9 3.01,6L3,20c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V6C21,4.9 20.1,4 19,4zM19,20H5V10h14V20zM19,8H5V6h14V8z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_call.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z" />
+</vector>
+
+
+===== app\src\main\res\drawable\ic_close.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/urgency_critical"
+        android:pathData="M19,6.41L17.59,5 12,10.59 6.41,5 5,6.41 10.59,12 5,17.59 6.41,19 12,13.41 17.59,19 19,17.59 13.41,12z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_contacts.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_delete.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6,19c0,1.1 0.9,2 2,2h8c1.1,0 2,-0.9 2,-2V7H6v12zM19,4h-3.5l-1,-1h-5l-1,1H5v2h14V4z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_edit.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M3,17.25V21h3.75L17.81,9.94l-3.75,-3.75L3,17.25zM20.71,7.04c0.39,-0.39 0.39,-1.02 0,-1.41l-2.34,-2.34c-0.39,-0.39 -1.02,-0.39 -1.41,0l-1.83,1.83 3.75,3.75 1.83,-1.83z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_home.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_launcher_background.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<vector
+    android:height="108dp"
+    android:width="108dp"
+    android:viewportHeight="108"
+    android:viewportWidth="108"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:fillColor="#3DDC84"
+          android:pathData="M0,0h108v108h-108z"/>
+    <path android:fillColor="#00000000" android:pathData="M9,0L9,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M19,0L19,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M29,0L29,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M39,0L39,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M49,0L49,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M59,0L59,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M69,0L69,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M79,0L79,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M89,0L89,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M99,0L99,108"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,9L108,9"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,19L108,19"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,29L108,29"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,39L108,39"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,49L108,49"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,59L108,59"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,69L108,69"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,79L108,79"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,89L108,89"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M0,99L108,99"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M19,29L89,29"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M19,39L89,39"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M19,49L89,49"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M19,59L89,59"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M19,69L89,69"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M19,79L89,79"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M29,19L29,89"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M39,19L39,89"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M49,19L49,89"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M59,19L59,89"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M69,19L69,89"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+    <path android:fillColor="#00000000" android:pathData="M79,19L79,89"
+          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
+</vector>
+
+
+===== app\src\main\res\drawable\ic_launcher_foreground.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="85.84757"
+                android:endY="92.4963"
+                android:startX="42.9492"
+                android:startY="49.59793"
+                android:type="linear">
+                <item
+                    android:color="#44000000"
+                    android:offset="0.0" />
+                <item
+                    android:color="#00000000"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="nonZero"
+        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
+        android:strokeWidth="1"
+        android:strokeColor="#00000000" />
+</vector>
+
+===== app\src\main\res\drawable\ic_photo_placeholder.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="72dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    <path
+        android:fillColor="?attr/colorSurfaceVariant"
+        android:pathData="M0,0h72v72h-72z" />
+    <group
+        android:translateX="24"
+        android:translateY="24">
+        <path
+            android:fillColor="?attr/colorOnSurfaceVariant"
+            android:pathData="M21,19V5c0,-1.1 -0.9,-2 -2,-2H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2zM8.5,13.5l2.5,3.01L14.5,12l4.5,6H5l3.5,-4.5z" />
+    </group>
+</vector>
+
+===== app\src\main\res\drawable\ic_search.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_severity_high.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="@color/urgency_critical" android:pathData="M3,15h5v6H3z" />
+    <path android:fillColor="@color/urgency_critical" android:pathData="M10,10h5v11h-5z" />
+    <path android:fillColor="@color/urgency_critical" android:pathData="M17,4h5v17h-5z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_severity_low.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="@color/urgency_mild" android:pathData="M3,15h5v6H3z" />
+    <path android:fillColor="@color/severity_empty" android:pathData="M10,10h5v11h-5z" />
+    <path android:fillColor="@color/severity_empty" android:pathData="M17,4h5v17h-5z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_severity_medium.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="@color/urgency_serious" android:pathData="M3,15h5v6H3z" />
+    <path android:fillColor="@color/urgency_serious" android:pathData="M10,10h5v11h-5z" />
+    <path android:fillColor="@color/severity_empty" android:pathData="M17,4h5v17h-5z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_stats.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M5,9.2h3L8,19L5,19zM10.6,5h2.8v14h-2.8zM16.2,13L19,13v6h-2.8z" />
+</vector>
+
+===== app\src\main\res\drawable\ic_treated.xml =====
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM10,17l-5,-5 1.41,-1.41L10,14.17l7.59,-7.59L19,8l-9,9z" />
+</vector>
+
+===== app\src\main\res\drawable\step_number_bg.xml =====
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorPrimary" />
+</shape>
+
+===== app\src\main\res\layout\activity_add_treated_case.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/addRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/addAppBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/app_bar"
+        android:fitsSystemWindows="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/addToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:navigationContentDescription="@string/back"
+            app:navigationIcon="@drawable/ic_back"
+            app:title="@string/treated_title"
+            app:titleTextColor="@color/white" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:id="@+id/addScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/addAppBar"
+        app:layout_constraintBottom_toTopOf="@id/saveButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/descriptionLayout"
+                style="?attr/textInputOutlinedStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/treated_description_hint"
+                app:counterEnabled="true"
+                app:counterMaxLength="500">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/descriptionInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLength="500"
+                    android:minLines="3"
+                    android:textSize="18sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/proceduresLayout"
+                style="?attr/textInputOutlinedStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/treated_procedures_hint"
+                app:counterEnabled="true"
+                app:counterMaxLength="1000">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/proceduresInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLength="1000"
+                    android:minLines="3"
+                    android:textSize="18sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/dateLayout"
+                style="?attr/textInputOutlinedStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/treated_date_hint"
+                app:endIconDrawable="@drawable/ic_calendar"
+                app:endIconMode="custom">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/dateInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:focusable="false"
+                    android:inputType="none"
+                    android:textSize="18sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/treated_photo_label"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/photoPreview"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                app:shapeAppearanceOverlay="@style/ShapeRounded12" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/addPhotoButton"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/treated_add_photo" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/removePhotoButton"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/treated_remove_photo"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/saveButton"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_margin="16dp"
+        android:text="@string/save"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+===== app\src\main\res\layout\activity_emergency_detail.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/detailRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/detailAppBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/app_bar"
+        android:fitsSystemWindows="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/detailToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:navigationContentDescription="@string/back"
+            app:navigationIcon="@drawable/ic_back"
+            app:titleTextColor="@color/white" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:id="@+id/detailScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/detailAppBar"
+        app:layout_constraintBottom_toTopOf="@id/callBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/detailSeverity"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:id="@+id/detailSeverityLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="?attr/colorSecondaryContainer"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/detail_symptoms_title"
+                        android:textColor="?attr/colorOnSecondaryContainer"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/detailSymptoms"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:textColor="?attr/colorOnSecondaryContainer"
+                        android:textSize="18sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/stepsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </ScrollView>
+
+    <include
+        android:id="@+id/callBar"
+        layout="@layout/header_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+===== app\src\main\res\layout\activity_main.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusableInTouchMode="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/app_bar"
+        android:fitsSystemWindows="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:contentInsetStart="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <ImageView
+                    android:id="@+id/logo"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="12dp"
+                    android:contentDescription="@string/logo_desc"
+                    android:src="@drawable/logo1" />
+
+                <TextView
+                    android:id="@+id/toolbarTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/app_name"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/appBar"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:menu="@menu/bottom_nav_menu"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+===== app\src\main\res\layout\dialog_add_contact.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="24dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="24dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/nameLayout"
+        style="?attr/textInputOutlinedStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/contact_name_hint">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/nameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName|textCapWords"
+            android:maxLength="40" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/phoneLayout"
+        style="?attr/textInputOutlinedStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="@string/contact_phone_hint">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/phoneInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="phone"
+            android:maxLength="20"
+            android:textAlignment="viewStart"
+            android:textDirection="ltr" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>
+
+===== app\src\main\res\layout\fragment_contacts.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/contactsRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:padding="8dp"
+        android:paddingBottom="88dp" />
+
+    <TextView
+        android:id="@+id/contactsEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="96dp"
+        android:gravity="center"
+        android:paddingStart="88dp"
+        android:paddingEnd="88dp"
+        android:text="@string/contacts_empty_hint"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="16sp" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/addContactFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/contact_add_title"
+        android:src="@drawable/ic_add"
+        app:backgroundTint="?attr/colorPrimary"
+        app:tint="@color/white" />
+</FrameLayout>
+
+===== app\src\main\res\layout\fragment_home.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/homeSearchLayout"
+        style="?attr/textInputOutlinedStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:hint="@string/search_hint"
+        app:boxCornerRadiusBottomEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:endIconMode="clear_text"
+        app:startIconDrawable="@drawable/ic_search">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/homeSearchInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLength="50"
+            android:maxLines="1"
+            android:minHeight="64dp"
+            android:textSize="20sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp" />
+
+        <TextView
+            android:id="@+id/homeEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:padding="32dp"
+            android:text="@string/search_no_results"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="18sp"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>
+
+===== app\src\main\res\layout\fragment_placeholder.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/placeholderText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textSize="20sp" />
+</FrameLayout>
+
+===== app\src\main\res\layout\fragment_statistics.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/stats_emergencies_title"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/statsEmergenciesTotal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="14sp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:id="@+id/statsSeverityContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="@string/stats_treated_title"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/statsTreatedTotal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="40sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/stats_treated_total"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/stats_by_month"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/statsMonthContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/statsMonthEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/stats_no_treated"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</ScrollView>
+
+===== app\src\main\res\layout\fragment_treated_cases.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="?attr/textInputOutlinedStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:hint="@string/treated_search_hint"
+        app:boxCornerRadiusBottomEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:endIconMode="clear_text"
+        app:startIconDrawable="@drawable/ic_search">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/treatedSearchInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLength="50"
+            android:maxLines="1"
+            android:textSize="18sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/treatedRecycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="88dp" />
+
+        <TextView
+            android:id="@+id/treatedEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:padding="32dp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/addTreatedFab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:contentDescription="@string/treated_title"
+            android:src="@drawable/ic_add"
+            app:backgroundTint="?attr/colorPrimary"
+            app:tint="@color/white" />
+    </FrameLayout>
+</LinearLayout>
+
+===== app\src\main\res\layout\header_button.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/headerButton"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@color/sos_red"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_call" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:text="@string/header_button"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:importantForAccessibility="no"
+                android:scaleX="-1"
+                android:src="@drawable/ic_call" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>
+
+===== app\src\main\res\layout\item_card.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/cardImage"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="@null"
+            app:shapeAppearanceOverlay="@style/ShapeRounded12" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/cardTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/cardDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/cardSeverity"
+            android:layout_width="32dp"
+            android:layout_height="32dp" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+
+===== app\src\main\res\layout\item_contact.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/step_number_bg"
+            android:contentDescription="@null"
+            android:padding="12dp"
+            android:src="@drawable/ic_call" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/contactName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/contactPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textAlignment="viewStart"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textDirection="ltr"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/contactEdit"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/edit"
+            android:src="@drawable/ic_edit" />
+
+        <ImageButton
+            android:id="@+id/contactDelete"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/delete"
+            android:src="@drawable/ic_delete" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+
+===== app\src\main\res\layout\item_stat_row.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <ImageView
+        android:id="@+id/statIcon"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginEnd="12dp"
+        android:contentDescription="@null" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/statLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/statBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:importantForAccessibility="no"
+            app:trackCornerRadius="5dp"
+            app:trackThickness="10dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/statCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:minWidth="32dp"
+        android:gravity="end"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+</LinearLayout>
+
+===== app\src\main\res\layout\item_step.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:id="@+id/stepNumber"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/step_number_bg"
+        android:gravity="center"
+        android:textColor="?attr/colorOnPrimary"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/stepText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="18sp" />
+</LinearLayout>
+
+===== app\src\main\res\layout\item_treated_case.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/treatedPhoto"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/ShapeRounded12" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/treatedDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/treatedDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/treatedProcedures"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/treatedDelete"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/delete"
+            android:src="@drawable/ic_delete" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+
+===== app\src\main\res\menu\bottom_nav_menu.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="@string/nav_home" />
+    <item android:id="@+id/nav_contacts"
+        android:icon="@drawable/ic_contacts"
+        android:title="@string/nav_contacts" />
+    <item android:id="@+id/nav_treated"
+        android:icon="@drawable/ic_treated"
+        android:title="@string/nav_treated" />
+    <item android:id="@+id/nav_stats"
+        android:icon="@drawable/ic_stats"
+        android:title="@string/nav_stats" />
+</menu>
+
+===== app\src\main\res\values\colors.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#D70000</color>      <!-- لون الشريط العلوي والأزرار الأساسية -->
+    <color name="primary_dark">#830000</color> <!-- درجة أغمق من الأساسي -->
+    <color name="accent">#490000</color>       <!-- لون التمييز (أزرار ثانوية، تأكيدات) -->
+    <color name="background">#F5F7F6</color>   <!-- خلفية الشاشات -->
+    <color name="white">#FFFFFF</color>
+    <color name="app_bar">#D70000</color>
+    <color name="sos_red">#D32F2F</color>
+    <color name="urgency_mild">#00796B</color>
+    <color name="urgency_serious">#E65100</color>
+    <color name="urgency_critical">#D32F2F</color>
+    <color name="severity_empty">#D9D9D9</color>
+</resources>
+
+===== app\src\main\res\values\shapes.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ShapeRounded12" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+</resources>
+
+===== app\src\main\res\values\strings.xml =====
+<resources>
+    <string name="app_name">FirstAid Hero</string>
+    <string name="Snake_Bite">Snake bite</string>
+   <!-- <string name="sos">SOS</string>-->
+    <string name="header_button">SOS</string>
+    <string name="card_title">Card %1$d</string>
+    <string name="card_subtitle">Description for card number %1$d</string>
+    <string name="logo_desc">App logo</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_contacts">Contacts</string>
+    <string name="nav_treated">Treated cases</string>
+    <string name="nav_stats">Statistics</string>
+    <string name="severity_low">Severity: low</string>
+    <string name="severity_medium">Severity: medium</string>
+    <string name="severity_high">Severity: high</string>
+    <string name="back">Back</string>
+    <string name="no_dialer">No phone app found on this device</string>
+    <string name="ambulance_label">Ambulance</string>
+    <string name="contact_add_title">Add contact</string>
+    <string name="contact_name_hint">Name (doctor, hospital...)</string>
+    <string name="contact_phone_hint">Phone number</string>
+    <string name="contact_name_required">Enter a name</string>
+    <string name="contact_phone_invalid">Enter a valid phone number</string>
+    <string name="contacts_empty_hint">Tap + to add the number of your doctor or nearest hospital</string>
+    <string name="contact_delete_title">Delete contact?</string>
+    <string name="contact_delete_message">%1$s will be removed from your list.</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="search_hint">Search: burns, choking, snake...</string>
+    <string name="search_no_results">No matching case. Try another word.</string>
+    <string name="detail_symptoms_title">Symptoms</string>
+    <string name="number_ambulance" translatable="false">110</string>
+    <string name="number_fire" translatable="false">113</string>
+    <string name="number_police" translatable="false">112</string>
+    <string name="emergency_number" translatable="false">@string/number_ambulance</string>
+    <string name="fire_label">Fire department</string>
+    <string name="police_label">Police</string>
+    <string name="contact_edit_title">Edit contact</string>
+    <string name="edit">Edit</string>
+    <string name="contact_phone_duplicate">This number is already saved</string>
+    <string name="treated_title">Add treated case</string>
+    <string name="treated_description_hint">Case description</string>
+    <string name="treated_procedures_hint">Procedures performed</string>
+    <string name="treated_date_hint">Date</string>
+    <string name="treated_date_title">Select date</string>
+    <string name="treated_photo_label">Photo (optional)</string>
+    <string name="treated_add_photo">Add photo</string>
+    <string name="treated_change_photo">Change photo</string>
+    <string name="treated_remove_photo">Remove photo</string>
+    <string name="treated_photo_source_title">Add photo from</string>
+    <string name="photo_camera">Camera</string>
+    <string name="photo_gallery">Gallery</string>
+    <string name="treated_description_required">Enter the case description</string>
+    <string name="treated_procedures_required">Enter the procedures performed</string>
+    <string name="treated_date_future">The date cannot be in the future</string>
+    <string name="treated_save_failed">Could not save the case. Try again.</string>
+    <string name="no_camera">No camera app found</string>
+    <string name="treated_search_hint">Search cases or a date (2026-10)</string>
+    <string name="treated_empty">No treated cases yet. Tap + to record one.</string>
+    <string name="treated_delete_title">Delete this case?</string>
+    <string name="treated_delete_message">The case and its photo will be deleted permanently.</string>
+    <string name="severity_name_high">Critical</string>
+    <string name="severity_name_medium">Medium</string>
+    <string name="severity_name_low">Minor</string>
+
+    <string name="stats_emergencies_title">Cases by danger level</string>
+    <string name="stats_total_cases">%1$d cases in the guide</string>
+    <string name="stats_treated_title">Treated cases</string>
+    <string name="stats_treated_total">Total treated cases</string>
+    <string name="stats_by_month">By month</string>
+    <string name="stats_no_treated">No treated cases recorded yet</string>
+</resources>
+
+===== app\src\main\res\values\themes.xml =====
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.FirstAidHero1" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSecondaryContainer">#FFDAD4</item>
+        <item name="colorOnSecondaryContainer">#410000</item>
+    </style>
+
+    <style name="Theme.FirstAidHero1" parent="Base.Theme.FirstAidHero1" />
+</resources>
+
+===== app\src\main\res\values-ar\strings.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FirstAid Hero</string>
+    <string name="Snake_Bite">لدغة افعى</string>
+    <!--<string name="sos">اتصل بالطوارئ</string>-->
+    <string name="header_button">اتصل بالطوارئ</string>
+    <string name="card_title">كرت %1$d</string>
+    <string name="card_subtitle">وصف الكرت رقم %1$d</string>
+    <string name="logo_desc">شعار التطبيق</string>
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_contacts">جهات الاتصال</string>
+    <string name="nav_treated">الحالات المعالجة</string>
+    <string name="nav_stats">الإحصائيات</string>
+    <string name="severity_low">درجة الخطورة: منخفضة</string>
+    <string name="severity_medium">درجة الخطورة: متوسطة</string>
+    <string name="severity_high">درجة الخطورة: عالية</string>
+    <string name="back">رجوع</string>
+    <string name="no_dialer">لا يوجد تطبيق اتصال على هذا الجهاز</string>
+    <string name="ambulance_label">الإسعاف</string>
+    <string name="contact_add_title">إضافة جهة اتصال</string>
+    <string name="contact_name_hint">الاسم (طبيب، مستشفى...)</string>
+    <string name="contact_phone_hint">رقم الهاتف</string>
+    <string name="contact_name_required">أدخل الاسم</string>
+    <string name="contact_phone_invalid">أدخل رقم هاتف صحيح</string>
+    <string name="contacts_empty_hint">اضغط + لإضافة رقم طبيبك أو أقرب مستشفى</string>
+    <string name="contact_delete_title">حذف جهة الاتصال؟</string>
+    <string name="contact_delete_message">سيتم حذف %1$s من قائمتك.</string>
+    <string name="save">حفظ</string>
+    <string name="cancel">إلغاء</string>
+    <string name="delete">حذف</string>
+    <string name="search_hint">ابحث: حروق، اختناق، لدغ...</string>
+    <string name="search_no_results">لا توجد حالة مطابقة. جرّب كلمة أخرى.</string>
+    <string name="detail_symptoms_title">الأعراض</string>
+    <string name="fire_label">الإطفاء</string>
+    <string name="police_label">الشرطة</string>
+    <string name="contact_edit_title">تعديل جهة اتصال</string>
+    <string name="edit">تعديل</string>
+    <string name="contact_phone_duplicate">هذا الرقم محفوظ مسبقاً</string>
+    <string name="treated_title">إضافة حالة معالجة</string>
+    <string name="treated_description_hint">وصف الحالة</string>
+    <string name="treated_procedures_hint">الإجراءات التي تمت</string>
+    <string name="treated_date_hint">التاريخ</string>
+    <string name="treated_date_title">اختر التاريخ</string>
+    <string name="treated_photo_label">صورة (اختياري)</string>
+    <string name="treated_add_photo">إضافة صورة</string>
+    <string name="treated_change_photo">تغيير الصورة</string>
+    <string name="treated_remove_photo">حذف الصورة</string>
+    <string name="treated_photo_source_title">إضافة صورة من</string>
+    <string name="photo_camera">الكاميرا</string>
+    <string name="photo_gallery">المعرض</string>
+    <string name="treated_description_required">أدخل وصف الحالة</string>
+    <string name="treated_procedures_required">أدخل الإجراءات التي تمت</string>
+    <string name="treated_date_future">لا يمكن أن يكون التاريخ في المستقبل</string>
+    <string name="treated_save_failed">تعذّر حفظ الحالة. حاول مجدداً.</string>
+    <string name="no_camera">لا يوجد تطبيق كاميرا</string>
+    <string name="treated_search_hint">ابحث في الحالات أو تاريخ (2026-10)</string>
+    <string name="treated_empty">لا توجد حالات معالجة بعد. اضغط + لتسجيل حالة.</string>
+    <string name="treated_delete_title">حذف هذه الحالة؟</string>
+    <string name="treated_delete_message">ستُحذف الحالة وصورتها نهائياً.</string>
+    <string name="severity_name_high">حرجة</string>
+    <string name="severity_name_medium">متوسطة</string>
+    <string name="severity_name_low">طفيفة</string>
+
+    <string name="stats_emergencies_title">الحالات حسب درجة الخطورة</string>
+    <string name="stats_total_cases">%1$d حالة في الدليل</string>
+    <string name="stats_treated_title">الحالات المعالجة</string>
+    <string name="stats_treated_total">إجمالي الحالات المعالجة</string>
+    <string name="stats_by_month">حسب الشهر</string>
+    <string name="stats_no_treated">لا توجد حالات معالجة مسجّلة بعد</string>
+</resources>
+
+===== app\src\main\res\values-night\colors.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_bar">#7F1D1D</color>
+    <color name="urgency_mild">#4DB6AC</color>
+    <color name="urgency_serious">#FFA726</color>
+    <color name="urgency_critical">#FF5252</color>
+    <color name="severity_empty">#4A4A4A</color>
+</resources>
+
+===== app\src\main\res\values-night\themes.xml =====
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.FirstAidHero1" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#D32F2F</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">#FF6659</item>
+        <item name="colorSecondaryContainer">#5A1A1A</item>
+        <item name="colorOnSecondaryContainer">#FFDAD4</item>
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorSurfaceContainer">#1E1E1E</item>
+        <item name="colorSurfaceContainerLow">#1E1E1E</item>
+        <item name="colorOnSurface">#F2F2F2</item>
+        <item name="colorOnSurfaceVariant">#B8B8B8</item>
+    </style>
+</resources>
+
+===== app\src\main\res\xml\backup_rules.xml =====
+<?xml version="1.0" encoding="utf-8"?><!--
+   Sample backup rules file; uncomment and customize as necessary.
+   See https://developer.android.com/guide/topics/data/autobackup
+   for details.
+   Note: This file is ignored for devices older than API 31
+   See https://developer.android.com/about/versions/12/backup-restore
+-->
+<full-backup-content>
+    <!--
+   <include domain="sharedpref" path="."/>
+   <exclude domain="sharedpref" path="device.xml"/>
+-->
+</full-backup-content>
+
+===== app\src\main\res\xml\data_extraction_rules.xml =====
+<?xml version="1.0" encoding="utf-8"?><!--
+   Sample data extraction rules file; uncomment and customize as necessary.
+   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
+   for details.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- TODO: Use <include> and <exclude> to control what is backed up.
+        <include .../>
+        <exclude .../>
+        -->
+    </cloud-backup>
+    <!--
+    <device-transfer>
+        <include .../>
+        <exclude .../>
+    </device-transfer>
+    -->
+</data-extraction-rules>
+
+===== app\src\main\res\xml\file_paths.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="camera" path="camera/" />
+</paths>
+
+===== app\src\main\AndroidManifest.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FirstAidHero1">
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.EmergencyDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.AddTreatedCaseActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>
+
+===== app\src\test\java\com\ahmed\firstaidhero1\ExampleUnitTest.java =====
+package com.ahmed.firstaidhero1;
+
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
+/**
+ * Example local unit test, which will execute on the development machine (host).
+ *
+ * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
+ */
+public class ExampleUnitTest {
+    @Test
+    public void addition_isCorrect() {
+        assertEquals(4, 2 + 2);
+    }
+}
+
+===== app\build.gradle.kts =====
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+android {
+    namespace = "com.ahmed.firstaidhero1"
+    compileSdk {
+        version = release(37)
+    }
+
+    defaultConfig {
+        applicationId = "com.ahmed.firstaidhero1"
+        minSdk = 26
+        targetSdk = 37
+        versionCode = 1
+        versionName = "1.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            optimization {
+                enable = false
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    implementation(libs.activity.ktx)
+    implementation(libs.appcompat)
+    implementation(libs.constraintlayout)
+    implementation(libs.material)
+    implementation(libs.recyclerview)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.ext.junit)
+    implementation(libs.glide)
+}
+
+===== gradle\libs.versions.toml =====
+[versions]
+agp = "9.4.1"
+junit = "4.13.2"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+appcompat = "1.8.0"
+material = "1.14.0"
+activityKtx = "1.13.0"
+constraintlayout = "2.2.2"
+recyclerview = "1.4.0"
+glide = "4.16.0"
+
+[libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
+constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+
+
+
+===== build.gradle.kts =====
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    alias(libs.plugins.android.application) apply false
+}
+
+===== settings.gradle.kts =====
+pluginManagement {
+    repositories {
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "FirstAid Hero"
+include(":app")
+ 

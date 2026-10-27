@@ -39,6 +39,32 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/treatedSeverity"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:id="@+id/treatedCaseTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/treatedDescription"
                 android:layout_width="match_parent"
@@ -47,8 +73,7 @@
                 android:ellipsize="end"
                 android:maxLines="2"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/treatedProcedures"
@@ -70,3 +95,4 @@
             android:src="@drawable/ic_delete" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
+

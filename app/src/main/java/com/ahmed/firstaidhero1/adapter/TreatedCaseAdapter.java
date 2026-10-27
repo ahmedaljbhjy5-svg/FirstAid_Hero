@@ -39,7 +39,10 @@ public class TreatedCaseAdapter
 
                 @Override
                 public boolean areContentsTheSame(@NonNull TreatedCase a, @NonNull TreatedCase b) {
-                    return a.getDescription().equals(b.getDescription())
+                    return a.getCaseId() == b.getCaseId()
+                            && a.getCaseTitle().equals(b.getCaseTitle())
+                            && a.getSeverity() == b.getSeverity()
+                            && a.getDescription().equals(b.getDescription())
                             && a.getProcedures().equals(b.getProcedures())
                             && a.getDate().equals(b.getDate())
                             && Objects.equals(a.getPhotoPath(), b.getPhotoPath());
@@ -65,6 +68,8 @@ public class TreatedCaseAdapter
     public void onBindViewHolder(@NonNull TreatedViewHolder holder, int position) {
         TreatedCase item = getItem(position);
         holder.date.setText(formatDate(item.getDate()));
+        holder.caseTitle.setText(item.getCaseTitle());
+        holder.severity.setImageResource(item.getSeverity().iconRes);
         holder.description.setText(item.getDescription());
         holder.procedures.setText(item.getProcedures());
 
@@ -95,6 +100,8 @@ public class TreatedCaseAdapter
     static class TreatedViewHolder extends RecyclerView.ViewHolder {
         final ImageView photo;
         final TextView date;
+        final ImageView severity;
+        final TextView caseTitle;
         final TextView description;
         final TextView procedures;
         final ImageButton delete;
@@ -103,9 +110,12 @@ public class TreatedCaseAdapter
             super(itemView);
             photo = itemView.findViewById(R.id.treatedPhoto);
             date = itemView.findViewById(R.id.treatedDate);
+            severity = itemView.findViewById(R.id.treatedSeverity);
+            caseTitle = itemView.findViewById(R.id.treatedCaseTitle);
             description = itemView.findViewById(R.id.treatedDescription);
             procedures = itemView.findViewById(R.id.treatedProcedures);
             delete = itemView.findViewById(R.id.treatedDelete);
         }
     }
 }
+

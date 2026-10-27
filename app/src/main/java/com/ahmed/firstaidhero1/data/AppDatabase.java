@@ -1,7 +1,9 @@
 package com.ahmed.firstaidhero1.data;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.io.File;
@@ -13,7 +15,8 @@ import java.io.OutputStream;
 public class AppDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "firstaid.db";
-    private static final int DB_VERSION = 1;
+    // لازم تطابق PRAGMA user_version داخل firstaid.db (ينتجها build_db.py)
+    private static final int DB_VERSION = 2;
 
     // جدول الحالات
     public static final String TABLE_EMERGENCIES = "emergencies";
@@ -22,11 +25,17 @@ public class AppDatabase extends SQLiteOpenHelper {
     public static final String COL_DANGER = "danger_level";
     public static final String COL_SYMPTOMS = "symptoms";
     public static final String COL_SEARCH = "search_text";
+    public static final String COL_TITLE_EN = "title_en";
+    public static final String COL_SYMPTOMS_EN = "symptoms_en";
+    public static final String COL_SEARCH_EN = "search_text_en";
+    public static final String COL_SOURCE = "source";
+    public static final String COL_SOURCE_EN = "source_en";
 
     // جدول الخطوات
     public static final String TABLE_STEPS = "steps";
     public static final String COL_STEP_NUMBER = "step_number";
     public static final String COL_INSTRUCTION = "instruction_text";
+    public static final String COL_INSTRUCTION_EN = "instruction_text_en";
 
     // جدول الأرقام المخصصة
     public static final String TABLE_CONTACTS = "custom_contacts";
@@ -57,10 +66,15 @@ public class AppDatabase extends SQLiteOpenHelper {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
-    // بتنسخ القاعدة الجاهزة من assets مرة وحدة: أول تشغيل فقط
+    // بتنسخ القاعدة الجاهزة من assets: أول تشغيل، أو إذا الملف الموجود قديم/تالف.
+    // تنبيه: استبدال ملف قديم بيحذف الحالات المعالجة المخزّنة فيه (مقبول أثناء التطوير،
+    // وللتسليم النهائي بنثبّت DB_VERSION ولا نغيّره)
     private static void copyFromAssetsIfNeeded(Context context) {
         File dbFile = context.getDatabasePath(DB_NAME);
-        if (dbFile.exists()) return;
+        if (dbFile.exists()) {
+            if (isCurrent(dbFile)) return;
+            context.deleteDatabase(DB_NAME);
+        }
 
         File dir = dbFile.getParentFile();
         if (dir != null && !dir.exists() && !dir.mkdirs()) {
@@ -88,6 +102,29 @@ public class AppDatabase extends SQLiteOpenHelper {
         }
     }
 
+    // الملف الموجود صالح إذا إصداره مطابق وفيه الأعمدة الأساسية (بدونها ما بتشتغل الاستعلامات)
+    private static boolean isCurrent(File dbFile) {
+        try (SQLiteDatabase db = SQLiteDatabase.openDatabase(
+                dbFile.getPath(), null, SQLiteDatabase.OPEN_READONLY)) {
+            return db.getVersion() == DB_VERSION
+                    && hasColumn(db, TABLE_EMERGENCIES, COL_TITLE_EN)
+                    && hasColumn(db, TABLE_STEPS, COL_INSTRUCTION_EN)
+                    && hasColumn(db, TABLE_TREATED, COL_CASE_ID);
+        } catch (SQLiteException e) {
+            return false; // ملف تالف
+        }
+    }
+
+    private static boolean hasColumn(SQLiteDatabase db, String table, String column) {
+        try (Cursor c = db.rawQuery("PRAGMA table_info(" + table + ")", null)) {
+            int nameCol = c.getColumnIndexOrThrow("name");
+            while (c.moveToNext()) {
+                if (column.equals(c.getString(nameCol))) return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
@@ -104,3 +141,4 @@ public class AppDatabase extends SQLiteOpenHelper {
         // لاحقاً: ترفع DB_VERSION وتحط هون ALTER TABLE أو CREATE TABLE للتغييرات
     }
 }
+

@@ -54,6 +54,8 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         severityIcon.setImageResource(detail.getSeverity().iconRes);
         ((TextView) findViewById(R.id.detailSeverityLabel)).setText(detail.getSeverity().labelRes);
         ((TextView) findViewById(R.id.detailSymptoms)).setText(detail.getSymptoms());
+        ((TextView) findViewById(R.id.detailSource))
+                .setText(getString(R.string.detail_source, detail.getSource()));
 
         LinearLayout stepsContainer = findViewById(R.id.stepsContainer);
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -67,3 +69,4 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         findViewById(R.id.headerButton).setOnClickListener(v -> DialHelper.dialEmergency(this));
     }
 }
+

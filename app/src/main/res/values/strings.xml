@@ -63,11 +63,16 @@
     <string name="severity_name_high">Critical</string>
     <string name="severity_name_medium">Medium</string>
     <string name="severity_name_low">Minor</string>
-
-    <string name="stats_emergencies_title">Cases by danger level</string>
-    <string name="stats_total_cases">%1$d cases in the guide</string>
     <string name="stats_treated_title">Treated cases</string>
     <string name="stats_treated_total">Total treated cases</string>
     <string name="stats_by_month">By month</string>
     <string name="stats_no_treated">No treated cases recorded yet</string>
+    <string name="stats_by_severity">By danger level</string>
+    <string name="stats_by_case">By case</string>
+    <string name="stats_by_day">By day (latest 10 days)</string>
+    <string name="treated_case_hint">Case</string>
+    <string name="treated_case_required">Choose the case</string>
+    <string name="detail_steps_title">Steps</string>
+    <string name="detail_source">Source: %1$s</string>
 </resources>
+
