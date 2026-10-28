@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.ahmed.firstaidhero1.R;
 import com.ahmed.firstaidhero1.data.EmergencyRepository;
 import com.ahmed.firstaidhero1.model.CaseDetail;
+import com.ahmed.firstaidhero1.util.CaseImages;
 import com.ahmed.firstaidhero1.util.DialHelper;
 
 public class EmergencyDetailActivity extends AppCompatActivity {
@@ -40,6 +41,7 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         });
 
         long caseId = getIntent().getLongExtra(EXTRA_CASE_ID, -1L);
+        ((ImageView) findViewById(R.id.detailImage)).setImageResource(CaseImages.forCase(caseId));
         CaseDetail detail = new EmergencyRepository(this).getDetail(caseId);
         if (detail == null) {
             finish(); // رقم غير صالح: نسكّر الشاشة بدل ما ننهار

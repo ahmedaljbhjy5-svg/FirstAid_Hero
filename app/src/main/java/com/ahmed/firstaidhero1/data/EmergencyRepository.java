@@ -9,6 +9,7 @@ import com.ahmed.firstaidhero1.model.CardItem;
 import com.ahmed.firstaidhero1.model.CaseDetail;
 import com.ahmed.firstaidhero1.model.CaseOption;
 import com.ahmed.firstaidhero1.model.Severity;
+import com.ahmed.firstaidhero1.util.CaseImages;
 import com.ahmed.firstaidhero1.util.Lang;
 import com.ahmed.firstaidhero1.util.TextNormalizer;
 
@@ -78,7 +79,7 @@ public class EmergencyRepository {
                         c.getString(titleCol),
                         c.getString(symptomsCol),
                         Severity.fromLevel(c.getInt(dangerCol)),
-                        R.mipmap.ic_launcher)); // مؤقت لحد ما نجهّز الصور
+                        CaseImages.forCase(c.getLong(idCol))));
             }
         }
         return results;
