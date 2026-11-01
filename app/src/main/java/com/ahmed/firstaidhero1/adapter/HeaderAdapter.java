@@ -32,7 +32,7 @@ public class HeaderAdapter extends RecyclerView.Adapter<HeaderAdapter.HeaderView
 
     @Override
     public int getItemCount() {
-        return 1; // عنصر واحد بس: الزر
+        return 1;
     }
 
     static class HeaderViewHolder extends RecyclerView.ViewHolder {

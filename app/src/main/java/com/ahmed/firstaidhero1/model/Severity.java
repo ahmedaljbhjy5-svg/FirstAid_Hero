@@ -12,8 +12,8 @@ public enum Severity {
 
     public final int level;
     public final int iconRes;
-    public final int labelRes;   // نص طويل لقارئ الشاشة
-    public final int nameRes;    // اسم قصير للعرض (حرجة، متوسطة، طفيفة)
+    public final int labelRes;
+    public final int nameRes;
     public final int colorRes;
 
     Severity(int level, int iconRes, int labelRes, int nameRes, int colorRes) {
@@ -24,7 +24,7 @@ public enum Severity {
         this.colorRes = colorRes;
     }
 
-    // لقراءة القيمة من قاعدة البيانات. قيمة تالفة = نفترض الأخطر
+
     public static Severity fromLevel(int level) {
         for (Severity s : values()) {
             if (s.level == level) return s;

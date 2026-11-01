@@ -18,11 +18,11 @@ import java.util.List;
 
 public class EmergencyRepository {
 
-    // الحرج أولاً، وداخل كل مستوى بترتيب إدخال الحالات (الأكثر شيوعاً أولاً)
+
     private static final String DEFAULT_ORDER =
             AppDatabase.COL_DANGER + " DESC, " + AppDatabase.COL_CASE_ID + " ASC";
 
-    // أسماء مستعارة للأعمدة بلغة الجهاز (انظر Lang.pick)
+
     private static final String ALIAS_TITLE = "title_l";
     private static final String ALIAS_SYMPTOMS = "symptoms_l";
     private static final String ALIAS_STEP = "step_l";
@@ -42,8 +42,7 @@ public class EmergencyRepository {
         return Lang.pick(AppDatabase.COL_SYMPTOMS, AppDatabase.COL_SYMPTOMS_EN) + " AS " + ALIAS_SYMPTOMS;
     }
 
-    // بحث فوري: كل كلمة بالاستعلام لازم تكون موجودة (AND) بالنص العربي أو الإنجليزي،
-    // فالمستخدم بيلاقي الحالة مهما كانت لغة واجهته. والنص فاضي = كل الحالات
+
     public List<CardItem> search(String rawQuery) {
         StringBuilder where = new StringBuilder();
         List<String> args = new ArrayList<>();
@@ -85,7 +84,7 @@ public class EmergencyRepository {
         return results;
     }
 
-    // كل الحالات (اسم + خطورة) لقائمة الاختيار بشاشة إضافة حالة معالجة، مرتبة أبجدياً
+
     public List<CaseOption> getCaseOptions() {
         List<CaseOption> options = new ArrayList<>();
         SQLiteDatabase db = helper.getReadableDatabase();
@@ -108,7 +107,7 @@ public class EmergencyRepository {
         return options;
     }
 
-    // حالة كاملة مع خطواتها ومصدرها مرتبة، أو null إذا الرقم غير موجود
+
     public CaseDetail getDetail(long caseId) {
         SQLiteDatabase db = helper.getReadableDatabase();
         String[] idArg = {String.valueOf(caseId)};

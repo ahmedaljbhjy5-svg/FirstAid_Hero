@@ -20,7 +20,7 @@ public class CardAdapter extends ListAdapter<CardItem, CardAdapter.CardViewHolde
         void onItemClick(CardItem item);
     }
 
-    // بتحدد شو تغيّر بين قائمتين، فالتحديث بيحرّك بس الصفوف المتأثرة
+
     private static final DiffUtil.ItemCallback<CardItem> DIFF = new DiffUtil.ItemCallback<CardItem>() {
         @Override
         public boolean areItemsTheSame(@NonNull CardItem a, @NonNull CardItem b) {

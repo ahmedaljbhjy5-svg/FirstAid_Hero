@@ -8,7 +8,7 @@ public final class CaseImages {
 
     private CaseImages() {}
 
-    // الرقم = case_id بجدول emergencies (نفس ترتيب ملف المراجع)
+
     @DrawableRes
     public static int forCase(long caseId) {
         switch ((int) caseId) {
@@ -36,7 +36,7 @@ public final class CaseImages {
             case 22: return R.drawable.img_case_22_animal;
             case 23: return R.drawable.img_case_23_sugar;
             case 24: return R.drawable.img_case_24_gas;
-            default: return R.drawable.img_case_default; // حالة جديدة بدون رسمة
+            default: return R.drawable.img_case_default;
         }
     }
 }

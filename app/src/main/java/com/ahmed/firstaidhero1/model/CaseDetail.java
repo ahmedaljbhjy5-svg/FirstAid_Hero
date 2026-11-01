@@ -8,8 +8,7 @@ public class CaseDetail {
     private final Severity severity;
     private final String symptoms;
     private final List<String> steps;
-    private final String source; // اسم المصدر بلغة الجهاز (مثلاً: الصليب الأحمر البريطاني)
-
+    private final String source;
     public CaseDetail(long id, String title, Severity severity, String symptoms,
                       List<String> steps, String source) {
         this.id = id;

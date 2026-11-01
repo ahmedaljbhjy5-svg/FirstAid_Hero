@@ -6,12 +6,12 @@ public final class TextNormalizer {
 
     private TextNormalizer() {}
 
-    // لازم تطابق دالة normalize بملف build_db.py بالضبط، وإلا ما بيتطابق البحث
+
     public static String normalize(String input) {
         if (input == null) return "";
         StringBuilder sb = new StringBuilder(input.length());
         for (char c : input.toLowerCase(Locale.ROOT).toCharArray()) {
-            if ((c >= '\u064B' && c <= '\u0652') || c == '\u0640') continue; // تشكيل وتطويل
+            if ((c >= '\u064B' && c <= '\u0652') || c == '\u0640') continue;
             switch (c) {
                 case '\u0623': // أ
                 case '\u0625': // إ
@@ -31,7 +31,7 @@ public final class TextNormalizer {
         return sb.toString().trim().replaceAll("\\s+", " ");
     }
 
-    // بيعطّل الرموز الخاصة بـ LIKE (% و _) حتى تُعامل كحروف عادية
+
     public static String escapeLike(String token) {
         return token.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }

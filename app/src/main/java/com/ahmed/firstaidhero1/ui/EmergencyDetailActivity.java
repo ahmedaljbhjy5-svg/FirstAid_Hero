@@ -44,7 +44,7 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         ((ImageView) findViewById(R.id.detailImage)).setImageResource(CaseImages.forCase(caseId));
         CaseDetail detail = new EmergencyRepository(this).getDetail(caseId);
         if (detail == null) {
-            finish(); // رقم غير صالح: نسكّر الشاشة بدل ما ننهار
+            finish();
             return;
         }
 

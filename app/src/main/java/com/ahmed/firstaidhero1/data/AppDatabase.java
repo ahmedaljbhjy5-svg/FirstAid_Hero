@@ -15,7 +15,7 @@ import java.io.OutputStream;
 public class AppDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "firstaid.db";
-    // لازم تطابق PRAGMA user_version داخل firstaid.db (ينتجها build_db.py)
+
     private static final int DB_VERSION = 2;
 
     // جدول الحالات
@@ -66,9 +66,7 @@ public class AppDatabase extends SQLiteOpenHelper {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
-    // بتنسخ القاعدة الجاهزة من assets: أول تشغيل، أو إذا الملف الموجود قديم/تالف.
-    // تنبيه: استبدال ملف قديم بيحذف الحالات المعالجة المخزّنة فيه (مقبول أثناء التطوير،
-    // وللتسليم النهائي بنثبّت DB_VERSION ولا نغيّره)
+
     private static void copyFromAssetsIfNeeded(Context context) {
         File dbFile = context.getDatabasePath(DB_NAME);
         if (dbFile.exists()) {
@@ -81,7 +79,7 @@ public class AppDatabase extends SQLiteOpenHelper {
             throw new IllegalStateException("Cannot create database directory: " + dir);
         }
 
-        // ننسخ لملف مؤقت أولاً، وبعدها نعيد تسميته. لو انقطع النسخ بالنص ما بيضل ملف تالف
+
         File tmp = new File(dir, DB_NAME + ".tmp");
         try (InputStream in = context.getAssets().open(DB_NAME);
              OutputStream out = new FileOutputStream(tmp)) {
@@ -102,7 +100,7 @@ public class AppDatabase extends SQLiteOpenHelper {
         }
     }
 
-    // الملف الموجود صالح إذا إصداره مطابق وفيه الأعمدة الأساسية (بدونها ما بتشتغل الاستعلامات)
+
     private static boolean isCurrent(File dbFile) {
         try (SQLiteDatabase db = SQLiteDatabase.openDatabase(
                 dbFile.getPath(), null, SQLiteDatabase.OPEN_READONLY)) {
@@ -128,17 +126,17 @@ public class AppDatabase extends SQLiteOpenHelper {
     @Override
     public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
-        db.setForeignKeyConstraintsEnabled(true); // SQLite بيتجاهل المفاتيح الأجنبية ما لم نفعّلها
+        db.setForeignKeyConstraintsEnabled(true);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // فاضية عن قصد: الجداول جاهزة داخل الملف المنسوخ (user_version = 1)
+
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // لاحقاً: ترفع DB_VERSION وتحط هون ALTER TABLE أو CREATE TABLE للتغييرات
+
     }
 }
 

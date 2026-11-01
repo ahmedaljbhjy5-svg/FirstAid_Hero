@@ -60,7 +60,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
     private static final String STATE_PHOTO = "state_photo";
     private static final String STATE_CAMERA_FILE = "state_camera_file";
 
-    // خيط خلفي واحد: معالجة الصورة والكتابة بالقاعدة ما بتنفّذ على الـ Main Thread
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private TextInputLayout caseLayout;
@@ -80,13 +80,13 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
     private MaterialButton saveButton;
 
     private List<CaseOption> caseOptions;
-    private long selectedCaseId = -1L; // -1 = ما اختار حالة بعد
+    private long selectedCaseId = -1L;
 
     private LocalDate selectedDate = LocalDate.now();
     @Nullable private Uri photoUri;
     @Nullable private File cameraFile;
 
-    // لازم تتسجّل قبل أن تبدأ الـ Activity، لهيك هي حقول وليست داخل onCreate
+
     private final ActivityResultLauncher<PickVisualMediaRequest> galleryLauncher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri != null) setPhoto(uri);
@@ -113,7 +113,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.addRoot), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
-            // زر الحفظ بيرتفع فوق الكيبورد لما يفتح
+
             v.setPadding(systemBars.left, 0, systemBars.right,
                     Math.max(systemBars.bottom, ime.bottom));
             return insets;
@@ -161,7 +161,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        executor.shutdown(); // بيخلي المهمة الجارية تكمل ولا بيقبل جديدة
+        executor.shutdown();
     }
 
     private void restoreState(@Nullable Bundle state) {
@@ -172,7 +172,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
             try {
                 selectedDate = LocalDate.parse(date);
             } catch (DateTimeParseException ignored) {
-                // قيمة تالفة: نضل على تاريخ اليوم
+
             }
         }
         String photo = state.getString(STATE_PHOTO);
@@ -181,7 +181,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         if (camera != null) cameraFile = new File(camera);
     }
 
-    // ---------- اختيار الحالة (من قائمة الدليل فقط، بدون كتابة) ----------
+
 
     private void setupCaseDropdown() {
         caseOptions = new EmergencyRepository(this).getCaseOptions();
@@ -190,7 +190,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
             caseLayout.setError(null);
             showCase(caseOptions.get(position));
         });
-        // بعد تدوير الشاشة أو تغيير اللغة: نرجّع الحالة المختارة (بالرقم، فاسمها بيتجدد بلغة الجهاز)
+
         for (CaseOption option : caseOptions) {
             if (option.getId() == selectedCaseId) {
                 showCase(option);
@@ -207,7 +207,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         caseSeverityRow.setVisibility(View.VISIBLE);
     }
 
-    // القائمة لازم تعرض كل الحالات دائماً (الـ ArrayAdapter العادي بيفلتر حسب النص المختار)
+
     private static class CaseAdapter extends ArrayAdapter<CaseOption> {
         private final List<CaseOption> all;
 
@@ -236,7 +236,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         }
     }
 
-    // ---------- التاريخ ----------
+
 
     private void updateDateField() {
         dateInput.setText(selectedDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)));
@@ -262,7 +262,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         picker.show(getSupportFragmentManager(), "date_picker");
     }
 
-    // ---------- الصورة ----------
+
 
     private void showPhotoSourceDialog() {
         new MaterialAlertDialogBuilder(this)
@@ -301,7 +301,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
 
     private void discardCameraFile() {
         if (cameraFile != null) {
-            //noinspection ResultOfMethodCallIgnored
+
             cameraFile.delete();
             cameraFile = null;
         }
@@ -328,7 +328,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
         }
     }
 
-    // ---------- الحفظ ----------
+
 
     private void save() {
         String description = textOf(descriptionInput);
@@ -347,10 +347,10 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
                 || descriptionLayout.getError() != null
                 || proceduresLayout.getError() != null
                 || dateLayout.getError() != null) {
-            return; // الشاشة تضل مفتوحة وتعرض الأخطاء
+            return;
         }
 
-        saveButton.setEnabled(false); // يمنع الضغط المزدوج
+        saveButton.setEnabled(false);
         final Uri photo = photoUri;
         final String dateIso = selectedDate.toString();
         final long caseId = selectedCaseId;
@@ -364,7 +364,7 @@ public class AddTreatedCaseActivity extends AppCompatActivity {
                 new TreatedCaseRepository(getApplicationContext())
                         .insert(caseId, description, procedures, dateIso, relativePath);
             } catch (IOException | RuntimeException e) {
-                // فشل أي جزء: نحذف الصورة اللي انحفظت (لتجنب ملف بدون صف) ونرجّع الزر
+
                 PhotoStorage.delete(getApplicationContext(), relativePath);
                 runOnUiThread(() -> {
                     saveButton.setEnabled(true);

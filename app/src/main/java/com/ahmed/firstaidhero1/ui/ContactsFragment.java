@@ -81,7 +81,7 @@ public class ContactsFragment extends Fragment {
         emptyHint.setVisibility(hasUserContacts ? View.GONE : View.VISIBLE);
     }
 
-    // نفس الحوار للإضافة (existing = null) وللتعديل (existing = الرقم الحالي)
+
     private void showContactDialog(@Nullable Contact existing) {
         View form = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_add_contact, null);
@@ -111,7 +111,7 @@ public class ContactsFragment extends Fragment {
             nameLayout.setError(validateName(name));
             phoneLayout.setError(validatePhone(phone, editingId));
             if (nameLayout.getError() != null || phoneLayout.getError() != null) {
-                return; // الحوار يضل مفتوح ويعرض الأخطاء
+                return;
             }
 
             if (existing == null) {
@@ -136,7 +136,7 @@ public class ContactsFragment extends Fragment {
                 .show();
     }
 
-    // كل دالة تحقق بترجع نص الخطأ، أو null إذا المدخل سليم
+
     @Nullable
     private String validateName(String name) {
         return name.isEmpty() ? getString(R.string.contact_name_required) : null;

@@ -1,6 +1,6 @@
 package com.ahmed.firstaidhero1.model;
 
-// عدد مرات معالجة حالة معينة من الدليل
+
 public class CaseStat {
     private final String title;
     private final Severity severity;

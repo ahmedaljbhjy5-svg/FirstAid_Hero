@@ -1,6 +1,6 @@
 package com.ahmed.firstaidhero1.model;
 
-// عنصر بقائمة اختيار الحالة عند إضافة حالة معالجة
+
 public class CaseOption {
     private final long id;
     private final String title;

@@ -14,8 +14,7 @@ import com.ahmed.firstaidhero1.util.Lang;
 import java.util.ArrayList;
 import java.util.List;
 
-// كل الإحصائيات هون مبنية على الحالات المعالجة اللي سجّلناها (treated_cases)،
-// مش على حالات الدليل. وخطورة واسم كل حالة بيجوا من JOIN مع emergencies
+
 public class StatsRepository {
 
     private static final String T = AppDatabase.TABLE_TREATED;
@@ -29,10 +28,10 @@ public class StatsRepository {
         this.helper = AppDatabase.getInstance(context);
     }
 
-    // عدد الحالات المعالجة بكل مستوى خطورة. الحرجة أولاً
+
     public List<SeverityStat> getSeverityStats() {
-        // GROUP BY ما بيرجّع المجموعات الفاضية، فبنبدأ بأصفار ونعبّي اللي رجع
-        int[] counts = new int[Severity.values().length + 1]; // الفهرس = رقم المستوى (1 إلى 3)
+
+        int[] counts = new int[Severity.values().length + 1];
 
         String sql = "SELECT " + E + "." + AppDatabase.COL_DANGER + ", COUNT(*)" + JOIN
                 + " GROUP BY " + E + "." + AppDatabase.COL_DANGER;
@@ -51,7 +50,7 @@ public class StatsRepository {
         return result;
     }
 
-    // عدد الحالات المعالجة لكل حالة من الدليل (الأكثر تكراراً أولاً)، للحالات اللي إلها سجل فقط
+
     public List<CaseStat> getCaseStats() {
         String titleExpr = Lang.pick(E + "." + AppDatabase.COL_TITLE, E + "." + AppDatabase.COL_TITLE_EN);
         String sql = "SELECT " + titleExpr + " AS case_title, "
@@ -69,7 +68,7 @@ public class StatsRepository {
         return result;
     }
 
-    // عدد الحالات المعالجة بكل شهر (yyyy-MM). الأحدث أولاً
+
     public List<MonthStat> getTreatedPerMonth() {
         String sql = "SELECT substr(" + AppDatabase.COL_TREATED_DATE + ", 1, 7) AS month, COUNT(*)"
                 + " FROM " + T
@@ -84,9 +83,9 @@ public class StatsRepository {
         return result;
     }
 
-    // عدد الحالات المعالجة بكل يوم (yyyy-MM-dd)، آخر limit أيام فيها تسجيل، الأحدث أولاً
+
     public List<DayStat> getTreatedPerDay(int limit) {
-        // limit رقم int من عندنا (مش من المستخدم) فآمن نضمّنه بالنص
+
         String sql = "SELECT " + AppDatabase.COL_TREATED_DATE + ", COUNT(*)"
                 + " FROM " + T
                 + " GROUP BY " + AppDatabase.COL_TREATED_DATE

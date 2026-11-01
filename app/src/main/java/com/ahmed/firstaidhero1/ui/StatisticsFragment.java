@@ -29,7 +29,7 @@ import java.time.format.FormatStyle;
 import java.util.List;
 import java.util.Locale;
 
-// كل الأرقام هون عن الحالات المعالجة اللي سجّلناها نحن (مش عن حالات الدليل)
+
 public class StatisticsFragment extends Fragment {
 
     private static final int DAYS_SHOWN = 10;
@@ -63,8 +63,7 @@ public class StatisticsFragment extends Fragment {
         loadStats();
     }
 
-    // التبويبات عندنا بتُخفى وتُظهر (hide/show) وما بتنهدم، فما بيتنفذ onViewCreated مرة تانية.
-    // هالدالة بتنادي كل ما التبويب يظهر، حتى نشوف الحالات اللي انضافت من تبويب تاني
+
     @Override
     public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
@@ -81,7 +80,7 @@ public class StatisticsFragment extends Fragment {
         content.setVisibility(empty ? View.GONE : View.VISIBLE);
         if (empty) return;
 
-        // ---- حسب الخطورة (نسبة من كل الحالات المعالجة) ----
+
         severityContainer.removeAllViews();
         for (SeverityStat stat : repository.getSeverityStats()) {
             addRow(severityContainer, inflater,
@@ -91,7 +90,7 @@ public class StatisticsFragment extends Fragment {
                     ContextCompat.getColor(requireContext(), stat.getSeverity().colorRes));
         }
 
-        // ---- حسب اسم الحالة ----
+
         List<CaseStat> cases = repository.getCaseStats();
         int maxCase = 0;
         for (CaseStat stat : cases) maxCase = Math.max(maxCase, stat.getCount());
@@ -106,7 +105,7 @@ public class StatisticsFragment extends Fragment {
 
         int primary = MaterialColors.getColor(monthContainer, androidx.appcompat.R.attr.colorPrimary);
 
-        // ---- حسب الشهر ----
+
         List<MonthStat> months = repository.getTreatedPerMonth();
         int maxMonth = 0;
         for (MonthStat stat : months) maxMonth = Math.max(maxMonth, stat.getCount());
@@ -116,7 +115,7 @@ public class StatisticsFragment extends Fragment {
                     formatMonth(stat.getMonth()), stat.getCount(), maxMonth, primary);
         }
 
-        // ---- حسب اليوم (آخر أيام فيها تسجيل) ----
+
         List<DayStat> days = repository.getTreatedPerDay(DAYS_SHOWN);
         int maxDay = 0;
         for (DayStat stat : days) maxDay = Math.max(maxDay, stat.getCount());
@@ -127,7 +126,7 @@ public class StatisticsFragment extends Fragment {
         }
     }
 
-    // iconRes = 0 يعني بدون أيقونة
+
     private void addRow(LinearLayout container, LayoutInflater inflater, int iconRes,
                         String label, int count, int max, int color) {
         View row = inflater.inflate(R.layout.item_stat_row, container, false);
@@ -152,7 +151,7 @@ public class StatisticsFragment extends Fragment {
             return YearMonth.parse(yearMonth)
                     .format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()));
         } catch (DateTimeParseException e) {
-            return yearMonth; // صيغة غير متوقعة: نعرضها كما هي بدل ما ننهار
+            return yearMonth;
         }
     }
 

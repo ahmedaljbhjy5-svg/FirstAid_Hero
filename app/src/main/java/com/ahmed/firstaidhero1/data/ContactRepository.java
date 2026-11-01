@@ -22,7 +22,7 @@ public class ContactRepository {
         this.helper = AppDatabase.getInstance(context);
     }
 
-    // الأرقام العامة الثابتة أولاً (id سالب = غير مخزّنة بالقاعدة)، وبعدها أرقام المستخدم بالاسم
+
     public List<Contact> getAll() {
         List<Contact> list = new ArrayList<>();
         list.add(new Contact(-1, context.getString(R.string.ambulance_label),
@@ -58,7 +58,7 @@ public class ContactRepository {
                 .insert(AppDatabase.TABLE_CONTACTS, null, values(name, phone));
     }
 
-    // بترجع عدد الصفوف المعدّلة (0 = الصف انحذف قبل التعديل)
+
     public int update(long id, String name, String phone) {
         return helper.getWritableDatabase().update(
                 AppDatabase.TABLE_CONTACTS,
@@ -74,7 +74,7 @@ public class ContactRepository {
                 new String[]{String.valueOf(id)});
     }
 
-    // هل الرقم محفوظ مسبقاً؟ excludeId = الصف اللي عم نعدّله (حتى ما يُعتبر مكرراً مع نفسه)
+
     public boolean phoneExists(String phone, long excludeId) {
         String target = PhoneValidator.canonical(phone);
         SQLiteDatabase db = helper.getReadableDatabase();

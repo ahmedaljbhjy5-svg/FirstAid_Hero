@@ -73,7 +73,7 @@ public class TreatedCaseAdapter
         holder.description.setText(item.getDescription());
         holder.procedures.setText(item.getProcedures());
 
-        // لازم نعالج الحالتين (بصورة وبدون) بكل bind بسبب إعادة التدوير
+
         if (item.getPhotoPath() == null) {
             Glide.with(holder.photo).clear(holder.photo);
             holder.photo.setImageResource(R.drawable.ic_photo_placeholder);
@@ -93,7 +93,7 @@ public class TreatedCaseAdapter
         try {
             return LocalDate.parse(iso).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
         } catch (DateTimeParseException e) {
-            return iso; // صيغة غير متوقعة: نعرضها كما هي بدل ما ننهار
+            return iso;
         }
     }
 

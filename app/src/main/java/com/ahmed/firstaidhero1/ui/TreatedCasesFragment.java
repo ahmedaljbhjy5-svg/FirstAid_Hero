@@ -33,7 +33,7 @@ public class TreatedCasesFragment extends Fragment {
     private TextView emptyView;
     private String currentQuery = "";
 
-    // نتيجة شاشة الإضافة: لو انحفظت حالة، نعيد تحميل القائمة
+
     private final ActivityResultLauncher<Intent> addLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {

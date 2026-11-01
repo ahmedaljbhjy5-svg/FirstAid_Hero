@@ -24,8 +24,7 @@ public class TreatedCaseRepository {
         this.helper = AppDatabase.getInstance(context);
     }
 
-    // بترمي استثناء إذا فشل الإدخال، حتى يعرف المستدعي ويعرض رسالة بدل ما يظن إنه نجح
-    // caseId لازم يكون من جدول emergencies (المفتاح الأجنبي بيرفض غير هيك)
+
     public long insert(long caseId, String description, String procedures, String dateIso,
                        @Nullable String photoPath) {
         ContentValues values = new ContentValues();
@@ -39,8 +38,7 @@ public class TreatedCaseRepository {
         return id;
     }
 
-    // الأحدث أولاً. كل كلمة لازم تظهر بالوصف أو الإجراءات أو التاريخ أو اسم الحالة
-    // (AND بين الكلمات، OR بين الأعمدة). اسم الحالة وخطورتها بيجوا من JOIN مع emergencies
+
     public List<TreatedCase> search(@Nullable String rawQuery) {
         final String t = AppDatabase.TABLE_TREATED;
         final String e = AppDatabase.TABLE_EMERGENCIES;
@@ -105,13 +103,13 @@ public class TreatedCaseRepository {
                         c.getString(descCol),
                         c.getString(procCol),
                         c.getString(dateCol),
-                        c.getString(photoCol))); // null إذا NULL
+                        c.getString(photoCol)));
             }
         }
         return results;
     }
 
-    // بتحذف الصف وبترجّع مسار صورته (إن وُجد) حتى يحذف المستدعي الملف
+
     @Nullable
     public String delete(long id) {
         SQLiteDatabase db = helper.getWritableDatabase();

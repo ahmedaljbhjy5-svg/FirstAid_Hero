@@ -35,11 +35,11 @@ public final class PhotoStorage {
         if (file.exists() && !file.delete()) file.deleteOnExit();
     }
 
-    // بتقرأ الصورة من أي Uri، بتصغّرها وبتصحح اتجاهها، وبتحفظها JPEG. بترجّع المسار النسبي
+
     public static String saveScaledCopy(Context context, Uri source) throws IOException {
         ContentResolver resolver = context.getContentResolver();
 
-        // 1) قياس الأبعاد فقط، بدون تحميل الصورة بالذاكرة
+
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;
         try (InputStream in = open(resolver, source)) {
@@ -49,7 +49,7 @@ public final class PhotoStorage {
             throw new IOException("Not a valid image: " + source);
         }
 
-        // 2) تحميل نسخة مصغّرة بنسبة قوة 2 (أسرع وأوفر بالذاكرة)
+
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight);
         Bitmap decoded;
@@ -58,7 +58,7 @@ public final class PhotoStorage {
         }
         if (decoded == null) throw new IOException("Could not decode image");
 
-        // 3) تدوير حسب EXIF + تصغير للحجم النهائي بخطوة وحدة
+
         int rotation = readRotation(resolver, source);
         float scale = Math.min(1f, (float) MAX_SIDE_PX / Math.max(decoded.getWidth(), decoded.getHeight()));
         Bitmap result = decoded;
@@ -70,7 +70,7 @@ public final class PhotoStorage {
             if (result != decoded) decoded.recycle();
         }
 
-        // 4) حفظ JPEG بمجلد التطبيق الخاص
+
         File dir = new File(context.getFilesDir(), DIR);
         if (!dir.exists() && !dir.mkdirs()) throw new IOException("Cannot create " + dir);
         String relative = DIR + "/" + UUID.randomUUID() + ".jpg";
@@ -94,7 +94,7 @@ public final class PhotoStorage {
         return in;
     }
 
-    // أكبر قوة 2 بتخلي الأبعاد لسا >= الحجم المطلوب
+
     private static int sampleSize(int width, int height) {
         int sample = 1;
         while (Math.max(width, height) / (sample * 2) >= MAX_SIDE_PX) {
@@ -119,7 +119,7 @@ public final class PhotoStorage {
                     return 0;
             }
         } catch (IOException e) {
-            return 0; // ما قدرنا نقرأ EXIF: نعتبر الصورة معتدلة
+            return 0;
         }
     }
 }

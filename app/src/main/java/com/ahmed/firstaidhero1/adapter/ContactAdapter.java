@@ -50,7 +50,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         holder.name.setText(contact.getName());
         holder.phone.setText(contact.getPhone());
 
-        // الأرقام العامة ما بتتعدل ولا بتنحذف: نخفي الزرين، ونعرضهم لباقي الصفوف (بسبب إعادة التدوير)
+
         int visibility = contact.isBuiltIn() ? View.GONE : View.VISIBLE;
         holder.edit.setVisibility(visibility);
         holder.delete.setVisibility(visibility);

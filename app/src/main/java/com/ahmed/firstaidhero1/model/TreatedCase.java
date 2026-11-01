@@ -4,13 +4,13 @@ import androidx.annotation.Nullable;
 
 public class TreatedCase {
     private final long id;
-    private final long caseId;          // الحالة من دليل الإسعافات (emergencies.case_id)
-    private final String caseTitle;     // اسمها بلغة الجهاز (بيجي من JOIN، مش مخزّن)
-    private final Severity severity;    // خطورتها (بتجي من JOIN كمان)
+    private final long caseId;
+    private final String caseTitle;
+    private final Severity severity;
     private final String description;
     private final String procedures;
-    private final String date;          // yyyy-MM-dd
-    @Nullable private final String photoPath; // مسار نسبي داخل files/، أو null
+    private final String date;
+    @Nullable private final String photoPath;
 
     public TreatedCase(long id, long caseId, String caseTitle, Severity severity,
                        String description, String procedures,
